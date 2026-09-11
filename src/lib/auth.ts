@@ -2,7 +2,13 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 const SESSION_COOKIE = "synapse_session";
 const PKCE_COOKIE = "synapse_pkce";
-const DEV_FALLBACK_SECRET = "synapselearn-local-dev-secret-not-for-production";
+
+function getSecret(): string {
+  const s = process.env.AUTH_SECRET;
+  if (s) return s;
+  if (process.env.NODE_ENV !== "production") return "synapselearn-local-dev-secret-not-for-production";
+  throw new Error("AUTH_SECRET must be set in production before auth/session endpoints can operate.");
+}
 
 export function getGoogleConfig() {
   return {
@@ -21,9 +27,7 @@ export function getBaseUrl(): string {
   return "http://localhost:3000";
 }
 
-function getSecret(): string {
-  return process.env.AUTH_SECRET || DEV_FALLBACK_SECRET;
-}
+
 
 function b64url(input: string): string {
   return Buffer.from(input).toString("base64url");

@@ -1,6 +1,6 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
+import Image from "next/image";
 
 interface AvatarProps {
   name: string;
@@ -35,10 +35,18 @@ export default function Avatar({ name, src, size = "md", showBadge = false, isLi
     xl: "w-20 h-20 text-2xl",
   };
 
+  const px = { sm: 32, md: 40, lg: 56, xl: 80 }[size];
+
   return (
     <div className="relative inline-flex">
       {src && src.trim() !== "" ? (
-        <img src={src} alt={name} className={`${sizeClasses[size]} rounded-full object-cover`} />
+        <Image
+          src={src}
+          alt={name}
+          width={px}
+          height={px}
+          className={`${sizeClasses[size]} rounded-full object-cover shrink-0`}
+        />
       ) : (
         <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br ${getGradient(name)} flex items-center justify-center text-white font-semibold shadow-sm`}>
           {name.charAt(0).toUpperCase()}
