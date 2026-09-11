@@ -15,6 +15,8 @@ export default function VideosPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
+  const [selectedDuration, setSelectedDuration] = useState<string>("all");
+  const [showCompletedOnly, setShowCompletedOnly] = useState(false);
   const [activeRecording, setActiveRecording] = useState<Recording | null>(null);
 
   const categories: { id: string; label: string; icon: string }[] = [
@@ -39,6 +41,15 @@ export default function VideosPage() {
   const filteredRecordings = useMemo(() => {
     return recordings.filter((rec) => {
       const teacher = allUsers.find((u) => u.id === rec.teacherId);
+      const prog = videoProgress[rec.id];
+      const seconds = rec.duration || 0;
+      const matchesDuration =
+        selectedDuration === "all" ||
+        (selectedDuration === "short" && seconds > 0 && seconds <= 600) ||
+        (selectedDuration === "medium" && seconds > 600 && seconds <= 1800) ||
+        (selectedDuration === "long" && seconds > 1800 && seconds <= 3600) ||
+        (selectedDuration === "xlong" && (seconds > 3600 || seconds === 0));
+      const matchesCompleted = !showCompletedOnly || prog?.completed === true;
       const matchesCategory =
         selectedCategory === "all" || rec.category === selectedCategory;
       const matchesLevel =
@@ -50,9 +61,9 @@ export default function VideosPage() {
         (teacher && teacher.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (rec.tags && rec.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())));
 
-      return matchesCategory && matchesLevel && matchesSearch;
+      return matchesCategory && matchesLevel && matchesSearch && matchesDuration && matchesCompleted;
     });
-  }, [recordings, allUsers, selectedCategory, selectedLevel, searchQuery]);
+  }, [recordings, allUsers, selectedCategory, selectedLevel, selectedDuration, showCompletedOnly, searchQuery, videoProgress]);
 
   const formatDuration = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -196,6 +207,34 @@ export default function VideosPage() {
             <option value="advanced">Advanced</option>
             <option value="expert">Expert</option>
           </select>
+
+          {/* Duration Filter Dropdown */}
+          <select
+            value={selectedDuration}
+            onChange={(e) => setSelectedDuration(e.target.value)}
+            aria-label="Filter by video length"
+            className="w-full sm:w-auto px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
+          >
+            <option value="all">Any Length</option>
+            <option value="short">Under 10 min</option>
+            <option value="medium">10–30 min</option>
+            <option value="long">30–60 min</option>
+            <option value="xlong">60+ min</option>
+          </select>
+
+          {/* Completed Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowCompletedOnly(!showCompletedOnly)}
+            aria-pressed={showCompletedOnly}
+            className={`w-full sm:w-auto px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer ${
+              showCompletedOnly
+                ? "bg-emerald-600 border-emerald-600 text-white shadow-xs"
+                : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            }`}
+          >
+            {showCompletedOnly ? "✓ Completed Only" : "Completed Only"}
+          </button>
         </div>
 
         {/* Category Pill Filters */}
@@ -235,6 +274,8 @@ export default function VideosPage() {
               setSearchQuery("");
               setSelectedCategory("all");
               setSelectedLevel("all");
+              setSelectedDuration("all");
+              setShowCompletedOnly(false);
             }}
             className="px-4 py-2 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl hover:bg-indigo-100 transition-colors cursor-pointer"
           >

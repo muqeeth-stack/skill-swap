@@ -169,6 +169,8 @@ export function Navbar() {
                 <div className="relative">
                   <button
                     onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                    aria-label="Open account menu"
+                    aria-expanded={profileDropdownOpen}
                     className="flex items-center gap-2 p-1 rounded-xl hover:ring-2 hover:ring-indigo-500/30 transition-all cursor-pointer"
                   >
                     <Image

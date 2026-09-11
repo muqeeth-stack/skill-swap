@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import { SKILL_CATEGORIES_METADATA } from "@/types";
 import { SkillCategory, SkillLevel, UserSkill } from "@/types";
+import { registerAccount, validateEmail, validatePassword } from "@/lib/accounts";
 
 export function RegistrationWizard() {
   const router = useRouter();
-  const { completeRegistration } = useApp();
+  const { completeRegistration, showToast } = useApp();
 
   const [step, setStep] = useState(1);
   const totalSteps = 5;
@@ -16,6 +17,12 @@ export function RegistrationWizard() {
   // Step 1: Account Info
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [stepError, setStepError] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("San Francisco, CA");
 
@@ -55,21 +62,66 @@ export function RegistrationWizard() {
     setDesiredSkillsList([...desiredSkillsList, { name: desiredSkillName, category: desiredCategory, level: desiredCurrentLevel, yearsOfExp: 0 }]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    completeRegistration({
-      name: name || "Alex Rivera",
-      email: email || "alex.rivera@example.com",
-      bio: bio || "Passionate about competitive sports and building web products. Love peer skill exchanges!",
-      location,
-      skillsTeach: offeredSkillsList,
-      skillsLearn: desiredSkillsList,
-      preferredLanguages: languages,
-      weeklyHours: hoursPerWeek,
-      availableTimes: timeSlots,
-      learningGoals: [primaryGoal],
-    });
-    router.push("/matches");
+    setStepError("");
+    if (step < totalSteps) {
+      if (step === 1) {
+        if (!name.trim()) {
+          setStepError("Please enter your full name.");
+          return;
+        }
+        if (!validateEmail(email)) {
+          setStepError("Please enter a valid email address.");
+          return;
+        }
+        const pwCheck = validatePassword(password);
+        if (!pwCheck.ok) {
+          setStepError(pwCheck.reason || "Password must be at least 8 characters.");
+          return;
+        }
+        if (password !== confirmPassword) {
+          setStepError("Passwords do not match.");
+          return;
+        }
+        if (!termsAccepted) {
+          setStepError("Please accept the Terms of Service to create an account.");
+          return;
+        }
+      }
+      setStep(step + 1);
+      return;
+    }
+
+    // Final step: create the real account first, then the profile (no orphan auth users).
+    setIsCreating(true);
+    try {
+      const accountRes = await registerAccount(name, email, password);
+      if (!accountRes.ok) {
+        setStepError(accountRes.error || "Account creation failed.");
+        setIsCreating(false);
+        return;
+      }
+      const acc = accountRes.account!;
+      completeRegistration({
+        id: acc.id,
+        name: name || "New Learner",
+        email: acc.email,
+        bio: bio || "Passionate about exchanging skills on SynapseLearn.",
+        location,
+        skillsTeach: offeredSkillsList,
+        skillsLearn: desiredSkillsList,
+        preferredLanguages: languages,
+        weeklyHours: hoursPerWeek,
+        availableTimes: timeSlots,
+        learningGoals: [primaryGoal],
+      });
+      showToast(`Account created for ${acc.email}.`, "success");
+      router.push("/matches");
+    } catch {
+      setStepError("Something went wrong creating your account. Please try again.");
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -88,7 +140,7 @@ export function RegistrationWizard() {
         </div>
       </div>
 
-      <form onSubmit={step === totalSteps ? handleSubmit : (e) => { e.preventDefault(); setStep(step + 1); }}>
+      <form onSubmit={handleSubmit}>
         {/* Step 1 */}
         {step === 1 && (
           <div className="space-y-4 animate-in fade-in duration-200">
@@ -97,30 +149,89 @@ export function RegistrationWizard() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+              <input
+                type="text"
+                data-testid="reg-name"
+                value={name}
+                onChange={(e) => { setName(e.target.value); setStepError(""); }}
+                placeholder="e.g. Alex Rivera"
+                className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-hidden dark:text-white"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+              <input
+                type="email"
+                data-testid="reg-email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setStepError(""); }}
+                placeholder="e.g. alex@example.com"
+                className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-hidden dark:text-white"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Password</label>
+              <div className="relative">
                 <input
-                  type="text"
-                  data-testid="reg-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Alex Rivera"
-                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-hidden dark:text-white"
-                  required
+                  type={showPassword ? "text" : "password"}
+                  data-testid="reg-password"
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setStepError(""); }}
+                  autoComplete="new-password"
+                  placeholder="At least 8 characters with letters"
+                  className="w-full px-3.5 py-2.5 pr-11 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-hidden dark:text-white"
                 />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
-                <input
-                  type="email"
-                  data-testid="reg-email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. alex@example.com"
-                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-hidden dark:text-white"
-                  required
-                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 dark:text-gray-400 hover:text-indigo-600 cursor-pointer rounded-lg"
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
               </div>
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+              <input
+                type={showPassword ? "text" : "password"}
+                data-testid="reg-confirm-password"
+                value={confirmPassword}
+                onChange={(e) => { setConfirmPassword(e.target.value); setStepError(""); }}
+                autoComplete="new-password"
+                placeholder="Re-enter your password"
+                className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-hidden dark:text-white"
+              />
+            </div>
+            </div>
+
+            <div>
+              <label htmlFor="reg-terms" className="flex items-start gap-2 text-[11px] text-gray-600 dark:text-gray-300 cursor-pointer">
+                <input
+                  id="reg-terms"
+                  type="checkbox"
+                  data-testid="reg-terms"
+                  checked={termsAccepted}
+                  onChange={(e) => { setTermsAccepted(e.target.checked); setStepError(""); }}
+                  className="w-4 h-4 mt-0.5 rounded accent-indigo-600 shrink-0"
+                />
+                <span>
+                  I agree to the{" "}
+                  <a href="/terms" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Terms of Service</a>{" "}
+                  and{" "}
+                  <a href="/privacy" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Privacy Policy</a>.
+                </span>
+              </label>
+            </div>
+
+            {stepError && (
+              <p role="alert" className="text-[12px] text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/60 rounded-xl px-3 py-2">
+                {stepError}
+              </p>
+            )}
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Location / City</label>
@@ -457,9 +568,19 @@ export function RegistrationWizard() {
 
           <button
             type="submit"
-            className="px-6 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md hover:shadow-indigo-500/25 transition-all cursor-pointer"
+            disabled={isCreating}
+            className="px-6 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 rounded-xl shadow-md hover:shadow-indigo-500/25 transition-all flex items-center gap-2 cursor-pointer"
           >
-            {step === totalSteps ? "Complete & View AI Matches ➔" : "Continue Next ➔"}
+            {isCreating ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                Creating your account…
+              </>
+            ) : step === totalSteps ? (
+              "Create Account & View AI Matches ➔"
+            ) : (
+              "Continue Next ➔"
+            )}
           </button>
         </div>
       </form>

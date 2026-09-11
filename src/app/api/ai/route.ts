@@ -17,8 +17,25 @@ const VALID_CATEGORIES: SkillCategory[] = [
 
 type AiEngine = "gemini" | "local";
 
+// Simple in-memory rate limit to discourage API abuse (per IP, sliding window).
+// Adequate for a demo deployment; swap for a durable store (Upstash/Vercel KV) for multi-instance use.
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 20;
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function rateLimitExceeded(ip: string): boolean {
+  const now = Date.now();
+  const bucket = rateBuckets.get(ip);
+  if (!bucket || now > bucket.resetAt) {
+    rateBuckets.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  bucket.count += 1;
+  return bucket.count > RATE_LIMIT_MAX;
+}
+
 function asString(v: unknown): string | undefined {
-  return typeof v === "string" && v.trim() ? v.trim() : undefined;
+  return typeof v === "string" && v.trim() ? v.trim().slice(0, 1000) : undefined;
 }
 
 function asStringArray(v: unknown): string[] {
@@ -28,6 +45,17 @@ function asStringArray(v: unknown): string[] {
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+    if (rateLimitExceeded(clientIp)) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Please slow down and try again shortly." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const { action, query, name, description, hoursPerWeek } = body;
 
@@ -181,7 +209,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("AI API Error:", err);
     return NextResponse.json(
-      { error: "Internal server error processing AI request", details: err instanceof Error ? err.message : "Unknown error" },
+      { error: "Internal server error processing AI request" },
       { status: 500 }
     );
   }

@@ -2,12 +2,16 @@
 const puppeteer = require('puppeteer-core');
 
 const CHROME_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const BASE_URL = 'https://skillswap-dqydkifdp-amuqeeth57-5664.vercel.app';
+const BASE_URL = 'http://localhost:3000';
+
+let registeredEmail = '';
+const QA_PASSWORD = 'SynapseQA!2026';
+const QA_NAME = 'Quinn Test Pilot';
 
 async function runQA() {
   console.log('====================================================');
   console.log('SYNAPSELEARN E2E QA AUTOMATION SUITE');
-  console.log('Testing all 25 User Journeys on Google Chrome');
+  console.log('Testing all 28 User Journeys on Google Chrome');
   console.log('====================================================\n');
 
   const browser = await puppeteer.launch({
@@ -34,8 +38,19 @@ async function runQA() {
 
   const results = {};
 
+  async function waitEl(sel, ms = 10000) {
+    await page.waitForSelector(sel, { timeout: ms });
+  }
+
+  // Programmatic click — bypasses hit-testing so fixed headers / bottom navs cannot
+  // swallow a synthesized pointer event (a real mouse user scrolls before clicking).
+  async function jsClick(sel) {
+    await waitEl(sel);
+    await page.$eval(sel, (el) => el.click());
+  }
+
   async function testJourney(id, name, fn) {
-    process.stdout.write(`Testing [${id}/25] ${name}... `);
+    process.stdout.write(`Testing [${id}/28] ${name}... `);
     try {
       await fn();
       results[id] = { name, status: 'PASS' };
@@ -56,7 +71,7 @@ async function runQA() {
       const searchInput = await page.$('input[placeholder*="learn Cricket"]');
       if (!searchInput) throw new Error('NL Search input not found on landing page');
       await searchInput.type('Learn Cricket fast bowling');
-      await page.click('button[type="submit"]');
+      await jsClick('button[type="submit"]');
       await page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 10000 });
       if (!page.url().includes('/matches')) throw new Error(`Did not navigate to /matches: ${page.url()}`);
     });
@@ -64,7 +79,18 @@ async function runQA() {
     // 2. Google Authentication / Quick Persona Sign-In
     await testJourney(2, 'Google / Quick Persona Authentication', async () => {
       await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle0' });
+      // Demo personas sit inside a collapsed <details> — wait for it then expand.
+      await waitEl('summary');
+      const expanded = await page.evaluate(() => {
+        const s = Array.from(document.querySelectorAll('summary'));
+        const el = s.find((x) => x.textContent && x.textContent.toLowerCase().includes('demo persona'));
+        if (el) { el.click(); return true; }
+        return false;
+      });
+      if (!expanded) throw new Error('Demo persona details/summary not found on /login');
+      await new Promise(r => setTimeout(r, 300));
       // Look for persona button by testid or text
+      await waitEl('[data-testid="persona-priya"]');
       const priyaBtn = await page.$('[data-testid="persona-priya"]');
       if (priyaBtn) {
         await priyaBtn.click();
@@ -100,35 +126,46 @@ async function runQA() {
     // 4. Onboarding & Registration Wizard
     await testJourney(4, '5-Step Registration Wizard', async () => {
       await page.goto(`${BASE_URL}/register`, { waitUntil: 'networkidle0' });
-      // Step 1: Account Info
-      await page.type('input[placeholder="e.g. Alex Rivera"]', 'Jordan QA Tester');
-      await page.type('input[placeholder="e.g. alex@example.com"]', 'jordan.qa@synapselearn.io');
-      await page.click('button[type="submit"]');
+      // Step 1: Account Info (email/password account)
+      await page.type('[data-testid="reg-name"]', QA_NAME);
+      registeredEmail = `qa.${Date.now()}@synapselearn.test`;
+      await page.type('[data-testid="reg-email"]', registeredEmail);
+      await page.type('[data-testid="reg-password"]', QA_PASSWORD);
+      await page.type('[data-testid="reg-confirm-password"]', QA_PASSWORD);
+      await page.click('[data-testid="reg-terms"]');
+      await jsClick('button[type="submit"]');
       await new Promise(r => setTimeout(r, 600));
 
       // Step 2: Skills to Teach
       const step2Text = await page.evaluate(() => document.body.innerText);
       if (!step2Text.includes('What Can You Teach')) throw new Error('Failed advancing to Step 2');
-      await page.click('button[type="submit"]');
+      await jsClick('button[type="submit"]');
       await new Promise(r => setTimeout(r, 600));
 
       // Step 3: Skills to Learn
       const step3Text = await page.evaluate(() => document.body.innerText);
       if (!step3Text.includes('What Do You Want to Learn')) throw new Error('Failed advancing to Step 3');
-      await page.click('button[type="submit"]');
+      await jsClick('button[type="submit"]');
       await new Promise(r => setTimeout(r, 600));
 
       // Step 4: Schedule & Availability
       const step4Text = await page.evaluate(() => document.body.innerText);
       if (!step4Text.includes('Schedule & Availability')) throw new Error('Failed advancing to Step 4');
-      await page.click('button[type="submit"]');
+      await jsClick('button[type="submit"]');
       await new Promise(r => setTimeout(r, 600));
 
       // Step 5: Primary Goal & Complete
       const step5Text = await page.evaluate(() => document.body.innerText);
       if (!step5Text.includes('Primary Outcome')) throw new Error('Failed advancing to Step 5');
-      await page.click('button[type="submit"]');
-      await page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 10000 });
+      // The goal textarea is required — fill it before the final submit.
+      await page.type('textarea[placeholder*="Master React"]', 'Master full-stack Next.js while sharing cricket bowling mechanics.');
+      await jsClick('button[type="submit"]');
+      // Account creation + PBKDF2 hashing is async; race navigation vs pathname change
+      await Promise.race([
+        page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 9000 }).catch(() => {}),
+        page.waitForFunction(() => window.location.pathname.includes('/matches'), { timeout: 9000 })
+      ]);
+      await new Promise(r => setTimeout(r, 500));
       if (!page.url().includes('/matches')) throw new Error('Not redirected to /matches after registration');
     });
 
@@ -172,7 +209,7 @@ async function runQA() {
       const modalText = await page.evaluate(() => document.body.innerText);
       if (!modalText.includes('Add Custom Skill')) throw new Error('Custom skill modal did not open');
       await page.type('input[placeholder*="Cricket Spin"]', 'Pickleball Spin Serve');
-      await page.click('button[type="submit"]');
+      await jsClick('button[type="submit"]');
       await new Promise(r => setTimeout(r, 800));
     });
 
@@ -269,7 +306,7 @@ async function runQA() {
       const input = await page.$('input[placeholder*="Message"]');
       if (!input) throw new Error('Message input not found');
       await input.type('Hello from automated QA test!');
-      await page.click('button[type="submit"]');
+      await jsClick('button[type="submit"]');
       await new Promise(r => setTimeout(r, 500));
       const text = await page.evaluate(() => document.body.innerText);
       if (!text.includes('Hello from automated QA test!')) throw new Error('Sent message not rendered in chat thread');
@@ -405,6 +442,111 @@ async function runQA() {
       const text = await page.evaluate(() => document.body.innerText);
       if (!text.includes('Admin & CMS Panel')) throw new Error('Admin panel not accessible');
       if (!text.includes('Moderation Queue')) throw new Error('Moderation queue tab missing');
+    });
+
+    // 26. Password Login / Logout / Remember-Me cycle
+    await testJourney(26, 'Password Login, Logout & Remember-Me', async () => {
+      if (!registeredEmail) throw new Error('No registered account available (journey 4 did not run)');
+      // Open profile dropdown and Sign Out
+      await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'networkidle0' });
+      await waitEl('button[aria-label="Open account menu"]');
+      await page.click('button[aria-label="Open account menu"]');
+      await new Promise(r => setTimeout(r, 300));
+      const signedOut = await page.evaluate(() => {
+        const b = Array.from(document.querySelectorAll('button')).find(x => x.textContent && x.textContent.trim() === 'Sign Out');
+        if (b) { b.click(); return true; }
+        return false;
+      });
+      if (!signedOut) throw new Error('Sign Out button not found in account menu');
+      await new Promise(r => setTimeout(r, 500));
+
+      // Log back in with email/password
+      await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle0' });
+      await waitEl('[data-testid="login-email"]');
+      await page.type('[data-testid="login-email"]', registeredEmail);
+      await page.type('[data-testid="login-password"]', QA_PASSWORD);
+      const rememberBox = await page.$('[data-testid="remember-me"]');
+      if (rememberBox) {
+        const checked = await page.evaluate(() => document.querySelector('[data-testid="remember-me"]').checked);
+        if (!checked) await page.click('[data-testid="remember-me"]');
+      }
+      await jsClick('[data-testid="login-submit"]');
+      await Promise.race([
+        page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 9000 }).catch(() => {}),
+        page.waitForFunction(() => window.location.pathname.includes('/dashboard'), { timeout: 9000 })
+      ]);
+      const afterLogin = await page.evaluate(() => document.body.innerText);
+      if (!afterLogin.includes(QA_NAME)) throw new Error('Name not rendered after password login');
+
+      // Reload — remember-me session must survive (localStorage marker)
+      await page.reload({ waitUntil: 'networkidle0' });
+      const afterReload = await page.evaluate(() => document.body.innerText);
+      if (!afterReload.includes(QA_NAME)) throw new Error('Remember-me session did not persist after reload');
+    });
+
+    // 27. Sign out fully removes session (no silent re-login on next load)
+    await testJourney(27, 'Logout Permanence (session cleared)', async () => {
+      await waitEl('button[aria-label="Open account menu"]');
+      await page.click('button[aria-label="Open account menu"]');
+      await new Promise(r => setTimeout(r, 300));
+      const signedOut = await page.evaluate(() => {
+        const b = Array.from(document.querySelectorAll('button')).find(x => x.textContent && x.textContent.trim() === 'Sign Out');
+        if (b) { b.click(); return true; }
+        return false;
+      });
+      if (!signedOut) throw new Error('Sign Out button not found for permanence check');
+      await new Promise(r => setTimeout(r, 500));
+      await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'networkidle0' });
+      const bodyText = await page.evaluate(() => document.body.innerText);
+      if (bodyText.includes(QA_NAME) && await page.$('button[aria-label="Open account menu"]')) {
+        throw new Error('Account still authenticated after logout');
+      }
+      const guestVisible = await page.evaluate(() => document.body.innerText);
+      if (!guestVisible.includes('Sign In') && !guestVisible.includes('Sign in')) {
+        throw new Error('Guest login CTA not visible after logout');
+      }
+    });
+
+    // 28. Forgot Password reset cycle with new password
+    await testJourney(28, 'Forgot Password Reset & Re-Login', async () => {
+      await page.goto(`${BASE_URL}/forgot-password`, { waitUntil: 'networkidle0' });
+      await page.type('[data-testid="fp-email"]', registeredEmail);
+      await jsClick('[data-testid="fp-submit"]');
+      await new Promise(r => setTimeout(r, 700));
+      const code = await page.evaluate(() => {
+        const el = document.querySelector('[data-testid="fp-code"]');
+        return el ? el.textContent.trim() : '';
+      });
+      if (!/^\d{6}$/.test(code)) throw new Error('6-digit reset code was not displayed');
+      await page.type('[data-testid="fp-code-input"]', code);
+      const newPass = 'ResetPass!2027';
+      await page.type('[data-testid="fp-password"]', newPass);
+      await page.type('[data-testid="fp-confirm"]', newPass);
+      await jsClick('[data-testid="fp-reset"]');
+      await new Promise(r => setTimeout(r, 1200));
+      const doneBtn = await page.$('[data-testid="fp-done"]');
+      const doneText = await page.evaluate(() => document.body.innerText);
+      if (!doneBtn || !doneText.toLowerCase().includes('password has been updated')) {
+        throw new Error('Password reset completion page not shown');
+      }
+
+      // Re-login with the new password proves the reset worked
+      await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle0' });
+      await waitEl('[data-testid="login-email"]');
+      await page.type('[data-testid="login-email"]', registeredEmail);
+      await page.type('[data-testid="login-password"]', newPass);
+      const rb = await page.$('[data-testid="remember-me"]');
+      if (rb) {
+        const checked = await page.evaluate(() => document.querySelector('[data-testid="remember-me"]').checked);
+        if (!checked) await page.click('[data-testid="remember-me"]');
+      }
+      await jsClick('[data-testid="login-submit"]');
+      await Promise.race([
+        page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 9000 }).catch(() => {}),
+        page.waitForFunction(() => window.location.pathname.includes('/dashboard'), { timeout: 9000 })
+      ]);
+      const afterText = await page.evaluate(() => document.body.innerText);
+      if (!afterText.includes(QA_NAME)) throw new Error('Login with reset password failed');
     });
 
   } finally {

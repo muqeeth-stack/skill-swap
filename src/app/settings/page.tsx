@@ -441,7 +441,11 @@ const [notifOwnerId, setNotifOwnerId] = useState<string | undefined>(currentUser
             <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-750 border border-gray-200/70 dark:border-gray-700">
               <div>
                 <div className="font-bold text-xs text-gray-900 dark:text-white">
-                  {authProvider === "google" ? "Google Account" : "SynapseLearn Local Session"}
+                  {authProvider === "google"
+                    ? "Google Account"
+                    : authProvider === "password"
+                      ? "Email & Password Account"
+                      : "SynapseLearn Demo Session"}
                 </div>
                 <p className="text-[11px] text-gray-600 dark:text-gray-400">
                   {currentUser?.email || "Signed in as a demo persona"}
@@ -451,19 +455,38 @@ const [notifOwnerId, setNotifOwnerId] = useState<string | undefined>(currentUser
                 className={`px-3 py-1 rounded-full text-[10px] font-bold ${
                   authProvider === "google"
                     ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                    : authProvider === "password"
+                      ? "bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
                 }`}
               >
-                {authProvider === "google" ? "Verified Sign-In ✓" : "Demo Mode"}
+                {authProvider === "google"
+                  ? "Google Verified ✓"
+                  : authProvider === "password"
+                    ? "Password Account"
+                    : "Demo Mode"}
               </span>
             </div>
 
             <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
               <p className="font-bold text-indigo-900 dark:text-indigo-200 mb-1">🔒 Secure sign-in</p>
               <p>
-                To link a real Google account, use <span className="font-semibold">Continue with Google</span> on the{" "}
-                <Link href="/login" className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">Sign In</Link>{" "}
-                page. SynapseLearn never stores plaintext passwords.
+                {authProvider === "password"
+                  ? "You are signed in with an email & password account. Passwords are salted and hashed with PBKDF2-SHA256 before storage — SynapseLearn never stores plaintext passwords."
+                  : "To use a real account, sign in with your email & password or Google on the "}
+                {authProvider !== "password" && (
+                  <Link href="/login" className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                    Sign In
+                  </Link>
+                )}
+                {authProvider === "password"
+                  ? " Reset your password any time from the "
+                  : " page."}
+                {authProvider === "password" && (
+                  <Link href="/forgot-password" className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
+                    Forgot Password
+                  </Link>
+                )}
               </p>
             </div>
           </div>

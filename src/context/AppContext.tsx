@@ -45,6 +45,13 @@ import {
   ParsedQuery,
 } from "@/lib/matching";
 import { aiNormalizeCustomSkill } from "@/lib/ai-assistant";
+import {
+  loginWithPassword,
+  setSession,
+  clearSession,
+  getSessionEmail,
+  getAccount,
+} from "@/lib/accounts";
 
 export interface ToastInfo {
   id: string;
@@ -77,14 +84,14 @@ interface AppState {
   isAuthenticated: boolean;
   registrationStep: number;
   theme: "light" | "dark";
-  authProvider: "demo" | "google";
+  authProvider: "demo" | "google" | "password";
   isGoogleConfigured: boolean;
   isAuthChecking: boolean;
   toasts: ToastInfo[];
 }
 
 interface AppContextType extends AppState {
-  login: (email: string, password?: string) => boolean;
+  login: (email: string, password: string, remember?: boolean) => Promise<boolean>;
   loginWithGoogle: () => boolean;
   quickLogin: (userEmail: string) => void;
   logout: () => void;
@@ -245,6 +252,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             } else {
               document.documentElement.classList.remove("dark");
             }
+
+            // Enforce password-account sessions (remember-me semantics)
+            if (parsed.authProvider === "password") {
+              const sessionEmail = getSessionEmail();
+              const valid = parsed.currentUser && sessionEmail && sessionEmail.toLowerCase() === String(parsed.currentUser.email || "").toLowerCase();
+              if (!valid) {
+                setState((prev) => ({ ...prev, currentUser: null, isAuthenticated: false, authProvider: "demo" }));
+              }
+            }
           }
         }
       }
@@ -267,6 +283,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       console.warn("Could not persist SynapseLearn state to localStorage:", err);
     }
   }, [state, isHydrated]);
+
+  // Cross-tab realtime sync: reflect external writes (e.g. chat from another tab)
+  useEffect(() => {
+    if (!isHydrated || typeof window === "undefined") return;
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== "synapselearn_state_v2" || !e.newValue) return;
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (parsed && Array.isArray(parsed.users)) {
+          setState((prev) => ({
+            ...prev,
+            ...parsed,
+            currentUser:
+              parsed.currentUser && prev.currentUser
+                ? parsed.users.find((u: User) => u.id === prev.currentUser!.id) || parsed.currentUser
+                : prev.currentUser,
+            toasts: prev.toasts,
+          }));
+        }
+      } catch {
+        /* ignore malformed cross-tab writes */
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [isHydrated]);
 
   // Check for a real Google OAuth session on mount (external auth store sync)
   useEffect(() => {
@@ -387,16 +429,69 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const login = useCallback((email: string) => {
-    const found = state.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (found) {
-      setState((prev) => ({ ...prev, currentUser: found, isAuthenticated: true }));
-      showToast(`Welcome back, ${found.name}!`, "success");
+  const login = useCallback(
+    async (email: string, password: string, remember: boolean = true): Promise<boolean> => {
+      const account = getAccount(email);
+      if (!account) {
+        showToast("No registered account found for this email. Please sign up.", "error");
+        return false;
+      }
+      const result = await loginWithPassword(email, password);
+      if (!result.ok) {
+        showToast(result.error || "Sign in failed.", "error");
+        return false;
+      }
+      setSession(email, remember);
+      const existingProfile = state.users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+      if (existingProfile) {
+        setState((prev) => ({ ...prev, currentUser: existingProfile, isAuthenticated: true, authProvider: "password" }));
+        showToast(`Welcome back, ${existingProfile.name}!`, "success");
+        return true;
+      }
+      // New password account with no profile yet: create a safe default profile (no orphan auth users).
+      const now = new Date().toISOString();
+      const newProfile: User = {
+        id: account.id,
+        name: account.name,
+        email: account.email,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.name || "learner")}`,
+        bio: "Joined SynapseLearn with an email account.",
+        location: "Remote",
+        preferredLanguages: ["English"],
+        weeklyHours: 3,
+        availableDays: [1, 2, 3, 4, 5],
+        availableTimes: ["evening"],
+        preferredMethods: ["video", "chat"],
+        learningGoals: ["Skill mastery"],
+        interests: [],
+        skillsTeach: [],
+        skillsLearn: [],
+        credits: 120,
+        isLinkedInVerified: false,
+        isGitHubVerified: false,
+        rating: 5.0,
+        totalReviews: 0,
+        totalSessionsTaught: 0,
+        totalSessionsLearned: 0,
+        completedExchanges: 0,
+        streakDays: 1,
+        badges: ["New to SynapseLearn"],
+        role: "user",
+        createdAt: now,
+      };
+      setState((prev) => ({
+        ...prev,
+        users: [newProfile, ...prev.users],
+        allUsers: [newProfile, ...prev.users],
+        currentUser: newProfile,
+        isAuthenticated: true,
+        authProvider: "password",
+      }));
+      showToast(`Welcome to SynapseLearn, ${newProfile.name}! Complete your profile to start matching.`, "success");
       return true;
-    }
-    showToast("Invalid credentials", "error");
-    return false;
-  }, [state.users, showToast]);
+    },
+    [state.users, showToast]
+  );
 
   const loginWithGoogle = useCallback(() => {
     if (!state.isGoogleConfigured) {
@@ -427,6 +522,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Network failure should not block local sign-out
       }
     }
+    clearSession();
     setState((prev) => ({
       ...prev,
       currentUser: null,
@@ -448,6 +544,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const completeRegistration = useCallback((data?: Partial<User>) => {
+    // Password-account registration: establish a real session marker + auth provider so
+    // the login survives refresh and is enforced on hydration (matches accounts.ts semantics).
+    const isPasswordAccount = Boolean(data?.id && data?.email);
+    if (isPasswordAccount && typeof window !== "undefined") {
+      try {
+        setSession(data!.email!, true);
+      } catch {
+        // Session persistence failure should not block account creation itself.
+      }
+    }
     setState((prev) => {
       const newUser: User = {
         id: `user-${Date.now()}`,
@@ -487,6 +593,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         allUsers: updatedUsers,
         currentUser: newUser,
         isAuthenticated: true,
+        authProvider: isPasswordAccount ? "password" : "demo",
         registrationStep: 1,
       };
     });
