@@ -54,7 +54,7 @@ export function calculateCompatibility(
     skillExchangeScore = 1.0;
     const myTeach = iCanTeachTarget[0].name;
     const targetTeach = targetCanTeachMe[0].name;
-    reasons.push(`Perfect 2-way skill swap: You teach ${myTeach} ⇄ ${targetUser.name.split(" ")[0]} teaches ${targetTeach}`);
+    reasons.push(`Perfect 2-way skill exchange: You teach ${myTeach} ⇄ ${targetUser.name.split(" ")[0]} teaches ${targetTeach}`);
   } else if (targetCanTeachMe.length > 0) {
     skillExchangeScore = 0.85;
     reasons.push(`${targetUser.name.split(" ")[0]} can mentor you in ${targetCanTeachMe.map((s) => s.name).join(", ")}`);

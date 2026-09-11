@@ -47,6 +47,7 @@ export default function ToastContainer() {
             </div>
             <button
               onClick={() => removeToast(t.id)}
+              aria-label="Dismiss notification"
               className="text-white/80 hover:text-white p-1 rounded-lg transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

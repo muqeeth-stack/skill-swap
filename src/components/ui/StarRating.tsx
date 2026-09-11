@@ -26,6 +26,11 @@ export default function StarRating({ rating, maxRating = 5, size = "md", interac
             type="button"
             disabled={!interactive}
             onClick={() => interactive && onChange?.(i + 1)}
+            aria-label={
+              interactive
+                ? `Rate ${i + 1} out of ${maxRating} stars`
+                : `${i + 1} out of ${maxRating} stars`
+            }
             className={`${interactive ? "cursor-pointer hover:scale-110" : "cursor-default"} transition-transform`}
           >
             <svg

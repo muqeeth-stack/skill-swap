@@ -782,7 +782,7 @@ export const DEMO_SESSIONS: Session[] = [
     status: "pending",
     type: "1on1",
     credits: 1,
-    meetingLink: "https://meet.synapselearn.io/s1",
+    meetingLink: "https://meet.jit.si/synapselearn-demo-s1",
     notes: "Review Marcus's portfolio code and transition to Next.js",
   },
   {
@@ -796,7 +796,7 @@ export const DEMO_SESSIONS: Session[] = [
     status: "pending",
     type: "1on1",
     credits: 1,
-    meetingLink: "https://meet.synapselearn.io/s2",
+    meetingLink: "https://meet.jit.si/synapselearn-demo-s2",
     notes: "Teaching Sarah node-based color correction and LUT application",
   },
   {
@@ -873,8 +873,8 @@ export const DEMO_RECORDINGS: Recording[] = [
     skill: "React",
     level: "Intermediate",
     thumbnailUrl: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    duration: 596, // seconds
+    videoUrl: "https://media.w3.org/2010/05/video/movie_300.mp4",
+    duration: 300, // seconds
     views: 1840,
     likes: 342,
     learningObjectives: [
@@ -897,8 +897,8 @@ export const DEMO_RECORDINGS: Recording[] = [
     skill: "Cricket",
     level: "Intermediate",
     thumbnailUrl: "https://images.unsplash.com/photo-1531415074868-036b1c57e359?w=800",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    duration: 653,
+    videoUrl: "https://media.w3.org/2010/05/sintel/trailer.mp4",
+    duration: 52,
     views: 2450,
     likes: 512,
     learningObjectives: [
@@ -921,8 +921,8 @@ export const DEMO_RECORDINGS: Recording[] = [
     skill: "Video Editing",
     level: "Advanced",
     thumbnailUrl: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    duration: 900,
+    videoUrl: "https://media.w3.org/2010/05/bunny/trailer.mp4",
+    duration: 33,
     views: 1270,
     likes: 295,
     learningObjectives: [
@@ -945,8 +945,8 @@ export const DEMO_RECORDINGS: Recording[] = [
     skill: "Cricket",
     level: "Advanced",
     thumbnailUrl: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-    duration: 720,
+    videoUrl: "https://media.w3.org/2010/05/video/movie_300.webm",
+    duration: 300,
     views: 3100,
     likes: 640,
     learningObjectives: [
@@ -969,8 +969,8 @@ export const DEMO_RECORDINGS: Recording[] = [
     skill: "Python",
     level: "Expert",
     thumbnailUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-    duration: 840,
+    videoUrl: "https://mdn.github.io/learning-area/html/multimedia-and-embedding/video-and-audio-content/rabbit320.mp4",
+    duration: 30,
     views: 4200,
     likes: 890,
     learningObjectives: [
@@ -993,8 +993,8 @@ export const DEMO_RECORDINGS: Recording[] = [
     skill: "Spanish",
     level: "Beginner",
     thumbnailUrl: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    duration: 610,
+    videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    duration: 5,
     views: 1950,
     likes: 420,
     learningObjectives: [
@@ -1056,7 +1056,7 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
 
 export const DEMO_MESSAGES: Message[] = [
   { id: "msg-1", conversationId: "conv-1", senderId: "u2", text: "Hey Sarah! Saw your profile on SynapseLearn. I'd love to exchange video editing for React tips.", createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), read: true },
-  { id: "msg-2", conversationId: "conv-1", senderId: "u1", text: "Hi Marcus! That's literally the exact skill swap I've been looking for. When are you free?", createdAt: new Date(Date.now() - 86400000).toISOString(), read: true },
+  { id: "msg-2", conversationId: "conv-1", senderId: "u1", text: "Hi Marcus! That's literally the exact skill exchange I've been looking for. When are you free?", createdAt: new Date(Date.now() - 86400000).toISOString(), read: true },
   { id: "msg-3", conversationId: "conv-1", senderId: "u2", text: "I have available slots on Wednesday evening!", createdAt: new Date(Date.now() - 7200000).toISOString(), read: true },
   { id: "msg-4", conversationId: "conv-1", senderId: "u1", text: "Sounds great! Let's connect on Wednesday at 5pm.", createdAt: new Date(Date.now() - 3600000).toISOString(), read: true },
   { id: "msg-5", conversationId: "conv-2", senderId: "u3", text: "Hey Sarah, could you check this quick Python snippet when you get a chance?", createdAt: new Date(Date.now() - 86400000).toISOString(), read: false },

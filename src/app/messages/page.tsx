@@ -152,6 +152,7 @@ function MessagesContent() {
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               placeholder="Search conversations..."
+              aria-label="Search conversations"
               className="w-full pl-8 pr-3 py-2 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
@@ -201,13 +202,13 @@ function MessagesContent() {
                         {u.name}
                       </h4>
                       {conv?.lastMessageTime && (
-                        <span className="text-[10px] text-gray-400 shrink-0">
+                        <span className="text-[10px] text-gray-600 shrink-0">
                           {formatMessageTime(conv.lastMessageTime)}
                         </span>
                       )}
                     </div>
 
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                    <p className="text-[11px] text-gray-600 dark:text-gray-400 truncate mt-0.5">
                       {conv?.lastMessage || `Teaches: ${u.skillsTeach[0]?.name || "Skill Barter"}`}
                     </p>
 
@@ -263,7 +264,7 @@ function MessagesContent() {
                     ★ {activeUser.rating.toFixed(1)}
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                <p className="text-[11px] text-gray-600 dark:text-gray-400 truncate">
                   Teaches: {activeUser.skillsTeach.map((s) => s.name).join(", ")}
                 </p>
               </div>
@@ -312,7 +313,7 @@ function MessagesContent() {
                     >
                       {msg.text}
                     </div>
-                    <span className="text-[10px] text-gray-400 mt-1 px-1">
+                    <span className="text-[10px] text-gray-600 mt-1 px-1">
                       {formatMessageTime(msg.createdAt)}
                     </span>
                   </div>
@@ -333,6 +334,7 @@ function MessagesContent() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder={`Message ${activeUser.name.split(" ")[0]}...`}
+              aria-label={`Message ${activeUser.name.split(" ")[0]}`}
               className="flex-1 px-4 py-2.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <button
@@ -365,6 +367,7 @@ function MessagesContent() {
               </div>
               <button
                 onClick={() => setIsBookingOpen(false)}
+                aria-label="Close"
                 className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-gray-900 dark:hover:text-white flex items-center justify-center text-xs font-bold cursor-pointer"
               >
                 ✕

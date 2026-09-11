@@ -155,7 +155,7 @@ export const AiRecommendationsSection: React.FC<AiRecommendationsSectionProps> =
                               </span>
                             )}
                           </div>
-                          <span className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                          <span className="text-[11px] text-gray-600 dark:text-gray-400 flex items-center gap-1">
                             ⭐ {target.rating.toFixed(1)} ({target.totalReviews})
                           </span>
                         </div>
@@ -172,7 +172,7 @@ export const AiRecommendationsSection: React.FC<AiRecommendationsSectionProps> =
 
                     {/* Skill highlight */}
                     <div className="space-y-1">
-                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Teaches:</div>
+                      <div className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Teaches:</div>
                       <div className="flex flex-wrap gap-1">
                         {target.skillsTeach.slice(0, 3).map((s, idx) => (
                           <span
@@ -247,7 +247,7 @@ export const AiRecommendationsSection: React.FC<AiRecommendationsSectionProps> =
               </div>
               <div>
                 <h4 className="font-bold text-sm text-gray-900 dark:text-white">{trend.name}</h4>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{trend.category}</p>
+                <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">{trend.category}</p>
               </div>
               <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 pt-2 border-t border-gray-200/60 dark:border-gray-700/60">
                 <span>👥 {trend.learnersCount} looking for mentors</span>
@@ -287,7 +287,7 @@ export const AiRecommendationsSection: React.FC<AiRecommendationsSectionProps> =
                 </div>
 
                 <div className="pt-2 border-t border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between">
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                  <span className="text-[11px] text-gray-600 dark:text-gray-400">
                     🪙 {room.credits === 0 ? "Free Exchange" : `${room.credits} Credits`}
                   </span>
                   {isUserInRoom ? (
@@ -344,7 +344,7 @@ export const AiRecommendationsSection: React.FC<AiRecommendationsSectionProps> =
                 </div>
 
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                  <span className="text-[11px] text-gray-600 dark:text-gray-400">
                     {completedStages}/{path.stages.length} Milestones
                   </span>
                   <Link
@@ -389,6 +389,7 @@ export const AiRecommendationsSection: React.FC<AiRecommendationsSectionProps> =
               </div>
               <button
                 onClick={() => setSelectedMatchForBreakdown(null)}
+                aria-label="Close"
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg cursor-pointer"
               >
                 ✕
@@ -414,7 +415,7 @@ export const AiRecommendationsSection: React.FC<AiRecommendationsSectionProps> =
                   <div key={idx} className="space-y-1">
                     <div className="flex justify-between text-xs font-medium">
                       <span className="text-gray-700 dark:text-gray-300">
-                        {factor.label} <span className="text-gray-400 text-[10px]">({factor.weight})</span>
+                        {factor.label} <span className="text-gray-600 text-[10px]">({factor.weight})</span>
                       </span>
                       <span className="font-bold text-indigo-600 dark:text-indigo-400">{pct}%</span>
                     </div>

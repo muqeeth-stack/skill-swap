@@ -16,8 +16,7 @@ export default function HomePage() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nlQuery.trim()) return;
-    router.push(`/matches?q=${encodeURIComponent(nlQuery.trim())}`);
+    router.push(`/matches${nlQuery.trim() ? `?q=${encodeURIComponent(nlQuery.trim())}` : ""}`);
   };
 
   return (
@@ -53,6 +52,7 @@ export default function HomePage() {
                 value={nlQuery}
                 onChange={(e) => setNlQuery(e.target.value)}
                 placeholder="e.g. I want to learn Cricket fast bowling and can teach Python or Next.js..."
+                aria-label="Natural language skill search"
                 className="w-full bg-transparent px-2 py-2.5 text-sm text-white placeholder-indigo-200/60 focus:outline-hidden"
               />
               <button

@@ -141,6 +141,7 @@ export default function GroupsPage() {
                 value={roomChatText}
                 onChange={(e) => setRoomChatText(e.target.value)}
                 placeholder="Message the room..."
+                aria-label="Message the room"
                 className="flex-1 px-3.5 py-2.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white"
               />
               <button

@@ -87,6 +87,7 @@ export default function CalendarManager() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => toggleTimeSlot(slot.id)}
+                        aria-label={slot.isAvailable ? "Mark unavailable" : "Mark available"}
                         className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                         title={slot.isAvailable ? "Mark unavailable" : "Mark available"}
                       >
@@ -96,6 +97,7 @@ export default function CalendarManager() {
                       </button>
                       <button
                         onClick={() => removeTimeSlot(slot.id)}
+                        aria-label="Remove slot"
                         className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         title="Remove slot"
                       >
@@ -114,8 +116,9 @@ export default function CalendarManager() {
           <h4 className="text-sm font-semibold text-gray-900 mb-3">Add Time Slot</h4>
           <div className="flex items-end gap-3">
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-500 mb-1">Start Time</label>
+              <label htmlFor="calendar-start-time" className="block text-xs font-medium text-gray-500 mb-1">Start Time</label>
               <input
+                id="calendar-start-time"
                 type="time"
                 value={newStart}
                 onChange={(e) => setNewStart(e.target.value)}
@@ -123,8 +126,9 @@ export default function CalendarManager() {
               />
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-500 mb-1">End Time</label>
+              <label htmlFor="calendar-end-time" className="block text-xs font-medium text-gray-500 mb-1">End Time</label>
               <input
+                id="calendar-end-time"
                 type="time"
                 value={newEnd}
                 onChange={(e) => setNewEnd(e.target.value)}

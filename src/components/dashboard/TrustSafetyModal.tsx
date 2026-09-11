@@ -72,6 +72,7 @@ export const TrustSafetyModal: React.FC<TrustSafetyModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl cursor-pointer"
           >
             ✕
@@ -109,7 +110,7 @@ export const TrustSafetyModal: React.FC<TrustSafetyModalProps> = ({
               <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-750 border border-gray-200/70 dark:border-gray-700 space-y-1.5">
                 <span className="text-xl">🤝</span>
                 <h4 className="font-bold text-xs text-gray-900 dark:text-white">Fair Exchange Code</h4>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                <p className="text-[11px] text-gray-600 dark:text-gray-400">
                   Respect booked session times. Synapse credits reflect true reciprocal knowledge exchange.
                 </p>
               </div>
@@ -117,7 +118,7 @@ export const TrustSafetyModal: React.FC<TrustSafetyModalProps> = ({
               <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-750 border border-gray-200/70 dark:border-gray-700 space-y-1.5">
                 <span className="text-xl">🔒</span>
                 <h4 className="font-bold text-xs text-gray-900 dark:text-white">Privacy & Security</h4>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                <p className="text-[11px] text-gray-600 dark:text-gray-400">
                   Never share sensitive passwords, financial info, or personal credentials during sessions.
                 </p>
               </div>
@@ -125,7 +126,7 @@ export const TrustSafetyModal: React.FC<TrustSafetyModalProps> = ({
               <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-750 border border-gray-200/70 dark:border-gray-700 space-y-1.5">
                 <span className="text-xl">⭐</span>
                 <h4 className="font-bold text-xs text-gray-900 dark:text-white">Verified Badges</h4>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                <p className="text-[11px] text-gray-600 dark:text-gray-400">
                   Look for LinkedIn and GitHub verification badges to validate external identity and credentials.
                 </p>
               </div>
@@ -133,7 +134,7 @@ export const TrustSafetyModal: React.FC<TrustSafetyModalProps> = ({
               <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-750 border border-gray-200/70 dark:border-gray-700 space-y-1.5">
                 <span className="text-xl">🛡️</span>
                 <h4 className="font-bold text-xs text-gray-900 dark:text-white">Zero Tolerance</h4>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                <p className="text-[11px] text-gray-600 dark:text-gray-400">
                   Harassment, hate speech, spam, and unsolicited commercial solicitation result in immediate suspension.
                 </p>
               </div>

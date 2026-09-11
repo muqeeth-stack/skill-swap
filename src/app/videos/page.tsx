@@ -3,9 +3,11 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useApp } from "@/context/AppContext";
 import { Recording } from "@/types";
-import { VideoPlayerModal } from "@/components/video/VideoPlayerModal";
+
+const VideoPlayerModal = dynamic(() => import("@/components/video/VideoPlayerModal").then((m) => m.VideoPlayerModal), { ssr: false });
 
 export default function VideosPage() {
   const { recordings, allUsers, videoProgress } = useApp();
@@ -167,11 +169,13 @@ export default function VideosPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search masterclasses by skill, topic, mentor, or tag..."
+              aria-label="Search masterclasses"
               className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-2xs"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
                 className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
               >
                 ✕
@@ -183,6 +187,7 @@ export default function VideosPage() {
           <select
             value={selectedLevel}
             onChange={(e) => setSelectedLevel(e.target.value)}
+            aria-label="Filter by experience level"
             className="w-full sm:w-auto px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
           >
             <option value="all">All Experience Levels</option>

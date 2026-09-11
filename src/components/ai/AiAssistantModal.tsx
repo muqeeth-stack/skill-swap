@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
-import { aiDiscoverSkills, aiGenerateStudyPlan, AiSkillSuggestion } from "@/lib/ai-assistant";
+import { AiSkillSuggestion } from "@/lib/ai-assistant";
 import Modal from "@/components/ui/Modal";
 
 interface AiAssistantModalProps {
@@ -10,12 +10,25 @@ interface AiAssistantModalProps {
   onClose: () => void;
 }
 
+type PlanShape = { title: string; weeks: { week: number; focus: string; tasks: string[] }[] };
+
+interface DiscoverResponse {
+  data: AiSkillSuggestion;
+  engine: "gemini" | "local";
+}
+
+interface PlanResponse {
+  data: PlanShape;
+  engine: "gemini" | "local";
+}
+
 export default function AiAssistantModal({ isOpen, onClose }: AiAssistantModalProps) {
   const { currentUser, sendConnectionRequest, showToast } = useApp();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<AiSkillSuggestion | null>(null);
-  const [studyPlan, setStudyPlan] = useState<{ title: string; weeks: { week: number; focus: string; tasks: string[] }[] } | null>(null);
+  const [engine, setEngine] = useState<"gemini" | "local">("local");
+  const [studyPlan, setStudyPlan] = useState<PlanShape | null>(null);
 
   const samplePrompts = [
     "I want to learn how to make websites",
@@ -25,24 +38,42 @@ export default function AiAssistantModal({ isOpen, onClose }: AiAssistantModalPr
     "I want to practice conversational Spanish",
   ];
 
-  const handleSearch = (textToSearch?: string) => {
+  const handleSearch = async (textToSearch?: string) => {
     const q = textToSearch || query;
     if (!q.trim()) return;
 
     setLoading(true);
     setStudyPlan(null);
-
-    setTimeout(() => {
-      const res = aiDiscoverSkills(q);
-      setSuggestion(res);
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "discover", query: q }),
+      });
+      const json = (await res.json()) as DiscoverResponse;
+      setSuggestion(json.data);
+      setEngine(json.engine);
+    } catch {
+      showToast("AI assistant is temporarily unavailable. Please try again.", "error");
+    } finally {
       setLoading(false);
-    }, 400);
+    }
   };
 
-  const handleGeneratePlan = (skillName: string) => {
-    const plan = aiGenerateStudyPlan(skillName, currentUser?.weeklyHours || 6);
-    setStudyPlan(plan);
-    showToast(`Generated study plan for ${skillName}!`, "success");
+  const handleGeneratePlan = async (skillName: string) => {
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "study-plan", query: skillName, hoursPerWeek: currentUser?.weeklyHours || 6 }),
+      });
+      const json = (await res.json()) as PlanResponse;
+      setStudyPlan(json.data);
+      setEngine(json.engine);
+      showToast(`Generated study plan for ${skillName}!`, "success");
+    } catch {
+      showToast("Could not generate a study plan right now.", "error");
+    }
   };
 
   const handleConnectMentor = (mentorId: string, mentorName: string) => {
@@ -63,7 +94,7 @@ export default function AiAssistantModal({ isOpen, onClose }: AiAssistantModalPr
             <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
               Synapse AI Learning Assistant
               <span className="px-2 py-0.5 text-[10px] font-semibold bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 rounded-full">
-                Intelligence Engine
+                {engine === "gemini" ? "Gemini AI Live" : "Smart Local Engine"}
               </span>
             </h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -79,6 +110,7 @@ export default function AiAssistantModal({ isOpen, onClose }: AiAssistantModalPr
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            aria-label="Ask AI a learning question"
             placeholder="e.g. 'I want to build mobile apps' or 'How do I improve at chess?'"
             className="w-full pl-4 pr-24 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
           />

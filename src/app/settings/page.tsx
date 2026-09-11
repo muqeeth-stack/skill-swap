@@ -16,6 +16,7 @@ export default function SettingsPage() {
     toggleTheme,
     resetToDefaultData,
     showToast,
+    authProvider,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
@@ -36,16 +37,12 @@ export default function SettingsPage() {
   // Track which user's data we've hydrated into form fields
   const [formOwnerId, setFormOwnerId] = useState<string | undefined>(currentUser?.id);
 
-  // Notification toggles
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [sessionReminders, setSessionReminders] = useState(true);
-  const [matchAlerts, setMatchAlerts] = useState(true);
-  const [communityUpdates, setCommunityUpdates] = useState(false);
-
-  // Security Form
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+// Notification toggles
+const [emailAlerts, setEmailAlerts] = useState(true);
+const [sessionReminders, setSessionReminders] = useState(true);
+const [matchAlerts, setMatchAlerts] = useState(true);
+const [communityUpdates, setCommunityUpdates] = useState(false);
+const [notifOwnerId, setNotifOwnerId] = useState<string | undefined>(currentUser?.id);
 
   // Derive profile inputs from currentUser when user changes (adjust state during render)
   if (currentUser && formOwnerId !== currentUser.id) {
@@ -59,6 +56,22 @@ export default function SettingsPage() {
     if (currentUser.preferredMethods) {
       setPreferredMethods(currentUser.preferredMethods);
     }
+    return null;
+  }
+
+  // Hydrate notification preferences for the active user (adjust state during render)
+  if (currentUser && notifOwnerId !== currentUser.id) {
+    setNotifOwnerId(currentUser.id);
+    try {
+      const raw = window.localStorage.getItem(`synapse_notif_prefs_${currentUser.id}`);
+      if (raw) {
+        const prefs = JSON.parse(raw) as { email?: boolean; reminders?: boolean; matches?: boolean; community?: boolean };
+        setEmailAlerts(prefs.email ?? true);
+        setSessionReminders(prefs.reminders ?? true);
+        setMatchAlerts(prefs.matches ?? true);
+        setCommunityUpdates(prefs.community ?? false);
+      }
+    } catch {}
     return null;
   }
 
@@ -85,8 +98,8 @@ export default function SettingsPage() {
       location: location.trim(),
       linkedinUrl: linkedinUrl.trim() || undefined,
       githubUrl: githubUrl.trim() || undefined,
-      isLinkedInVerified: linkedinUrl.trim() ? true : currentUser.isLinkedInVerified,
-      isGitHubVerified: githubUrl.trim() ? true : currentUser.isGitHubVerified,
+      isLinkedInVerified: currentUser.isLinkedInVerified,
+      isGitHubVerified: currentUser.isGitHubVerified,
     });
     showToast("Profile settings saved successfully", "success");
   };
@@ -106,24 +119,22 @@ export default function SettingsPage() {
     );
   };
 
-  const handlePasswordChange = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentPassword) {
-      showToast("Please enter your current password", "error");
-      return;
+  const handleSaveNotifications = () => {
+    if (!currentUser) return;
+    try {
+      window.localStorage.setItem(
+        `synapse_notif_prefs_${currentUser.id}`,
+        JSON.stringify({
+          email: emailAlerts,
+          reminders: sessionReminders,
+          matches: matchAlerts,
+          community: communityUpdates,
+        })
+      );
+      showToast("Notification preferences saved", "success");
+    } catch {
+      showToast("Could not save notification preferences", "error");
     }
-    if (newPassword.length < 6) {
-      showToast("New password must be at least 6 characters", "warning");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      showToast("New passwords do not match", "error");
-      return;
-    }
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    showToast("Password changed successfully", "success");
   };
 
   const handleExportData = () => {
@@ -298,7 +309,7 @@ export default function SettingsPage() {
               onChange={(e) => setWeeklyHours(Number(e.target.value))}
               className="w-full accent-indigo-600 cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+            <div className="flex justify-between text-[10px] text-gray-600 mt-1">
               <span>1 hr (Casual)</span>
               <span>10 hrs (Dedicated)</span>
               <span>25 hrs (Intensive)</span>
@@ -392,19 +403,26 @@ export default function SettingsPage() {
               <div key={n.id} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-750 border border-gray-200/70 dark:border-gray-700">
                 <div>
                   <h4 className="font-bold text-xs text-gray-900 dark:text-white">{n.title}</h4>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400">{n.desc}</p>
+                  <p className="text-[11px] text-gray-600 dark:text-gray-400">{n.desc}</p>
                 </div>
                 <input
                   type="checkbox"
                   checked={n.val}
-                  onChange={(e) => {
-                    n.set(e.target.checked);
-                    showToast(`${n.title} updated`, "info");
-                  }}
+                  onChange={(e) => n.set(e.target.checked)}
+                  aria-label={n.title}
                   className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                 />
               </div>
             ))}
+          </div>
+
+          <div className="pt-1 flex justify-end">
+            <button
+              onClick={handleSaveNotifications}
+              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+            >
+              Save Preferences ➔
+            </button>
           </div>
         </div>
       )}
@@ -412,56 +430,43 @@ export default function SettingsPage() {
       {/* Tab 4: Security & Login */}
       {activeTab === "security" && (
         <div className="space-y-6">
-          <form onSubmit={handlePasswordChange} className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700 shadow-sm space-y-4">
+          <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700 shadow-sm space-y-4">
             <div>
-              <h3 className="text-base font-extrabold text-gray-900 dark:text-white">Change Password</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Ensure your account is protected with a secure password.</p>
+              <h3 className="text-base font-extrabold text-gray-900 dark:text-white">Login & Authentication</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Passwords are managed by your identity provider, not stored on SynapseLearn.
+              </p>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-gray-50 dark:bg-gray-750 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-750 border border-gray-200/70 dark:border-gray-700">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="At least 6 characters"
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-gray-50 dark:bg-gray-750 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                />
+                <div className="font-bold text-xs text-gray-900 dark:text-white">
+                  {authProvider === "google" ? "Google Account" : "SynapseLearn Local Session"}
+                </div>
+                <p className="text-[11px] text-gray-600 dark:text-gray-400">
+                  {currentUser?.email || "Signed in as a demo persona"}
+                </p>
               </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repeat new password"
-                  className="w-full px-3.5 py-2.5 text-xs rounded-xl bg-gray-50 dark:bg-gray-750 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="submit"
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+              <span
+                className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                  authProvider === "google"
+                    ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                }`}
               >
-                Update Password
-              </button>
+                {authProvider === "google" ? "Verified Sign-In ✓" : "Demo Mode"}
+              </span>
             </div>
-          </form>
+
+            <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
+              <p className="font-bold text-indigo-900 dark:text-indigo-200 mb-1">🔒 Secure sign-in</p>
+              <p>
+                To link a real Google account, use <span className="font-semibold">Continue with Google</span> on the{" "}
+                <Link href="/login" className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">Sign In</Link>{" "}
+                page. SynapseLearn never stores plaintext passwords.
+              </p>
+            </div>
+          </div>
 
           {/* Theme & Display Mode */}
           <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700 shadow-sm space-y-4">
@@ -469,7 +474,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-750 border border-gray-200/70 dark:border-gray-700">
               <div>
                 <div className="font-bold text-xs text-gray-900 dark:text-white">Theme Mode: {theme === "dark" ? "Dark Mode" : "Light Mode"}</div>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">Toggle between high-contrast light and dark appearance.</p>
+                <p className="text-[11px] text-gray-600 dark:text-gray-400">Toggle between high-contrast light and dark appearance.</p>
               </div>
               <button
                 onClick={toggleTheme}
@@ -495,7 +500,7 @@ export default function SettingsPage() {
           <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-750 border border-gray-200/70 dark:border-gray-700 flex items-center justify-between">
             <div>
               <h4 className="font-bold text-xs text-gray-900 dark:text-white">Export Learning Data</h4>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">Download your skills, achievements, and session history as JSON.</p>
+              <p className="text-[11px] text-gray-600 dark:text-gray-400">Download your skills, achievements, and session history as JSON.</p>
             </div>
             <button
               onClick={handleExportData}

@@ -87,6 +87,7 @@ export function SynapseDailyBrief({
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => toggleTask(idx)}
+                      aria-label={`Mark task ${idx + 1} as ${isChecked ? "incomplete" : "complete"}`}
                       className="w-4 h-4 rounded-md text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                     />
                     <div>
@@ -132,7 +133,7 @@ export function SynapseDailyBrief({
                 <h4 className="text-xs font-bold text-gray-900 dark:text-white truncate">
                   {brief.recommendedPerson.user.name}
                 </h4>
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                <p className="text-[11px] text-gray-600 dark:text-gray-400 truncate">
                   Teaches: {brief.recommendedPerson.user.skillsTeach[0]?.name || "Expert"}
                 </p>
               </div>

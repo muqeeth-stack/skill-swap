@@ -92,6 +92,7 @@ function MatchesContent() {
             value={nlQuery}
             onChange={(e) => setNlQuery(e.target.value)}
             placeholder="Search with natural language, e.g. 'I want to learn Cricket fast bowling and can teach Next.js'..."
+            aria-label="Search matches with natural language"
             className="w-full bg-transparent px-2 py-2 text-xs sm:text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-hidden"
           />
           {nlQuery && (
@@ -133,6 +134,7 @@ function MatchesContent() {
             <select
               value={matchTypeFilter}
               onChange={(e) => setMatchTypeFilter(e.target.value)}
+              aria-label="Match type filter"
               className="px-3 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-medium dark:text-white"
             >
               <option value="all">All Match Types</option>
@@ -146,6 +148,7 @@ function MatchesContent() {
               <select
                 value={minScore}
                 onChange={(e) => setMinScore(Number(e.target.value))}
+                aria-label="Minimum match score"
                 className="px-2.5 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-indigo-600 dark:text-indigo-400"
               >
                 <option value={40}>40%+</option>

@@ -35,7 +35,7 @@ export default function ExchangePage() {
     acceptExchangeOffer(offer.id);
     sendConnectionRequest(offer.userId, `Hi, I accepted your barter offer: ${offer.teachSkill} for ${offer.learnSkill}!`);
     const convId = startConversationWithUser(offer.userId);
-    sendMessage(convId, `Hi! I would love to proceed with our skill swap (${offer.teachSkill} ⇄ ${offer.learnSkill}). When are you free?`);
+    sendMessage(convId, `Hi! I would love to proceed with our skill exchange (${offer.teachSkill} ⇄ ${offer.learnSkill}). When are you free?`);
     setChatUserId(offer.userId);
     setIsChatOpen(true);
   };
@@ -81,6 +81,7 @@ export default function ExchangePage() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search skill offers by keyword..."
+          aria-label="Search skill offers"
           className="w-full px-3.5 py-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white"
         />
       </div>
@@ -107,7 +108,7 @@ export default function ExchangePage() {
                     />
                     <div>
                       <div className="font-bold text-xs text-gray-900 dark:text-white">{creator?.name}</div>
-                      <div className="text-[10px] text-gray-400">{creator?.location}</div>
+                      <div className="text-[10px] text-gray-600">{creator?.location}</div>
                     </div>
                   </div>
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 uppercase">
@@ -121,18 +122,18 @@ export default function ExchangePage() {
 
                 <div className="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-xl border border-gray-100 dark:border-gray-700/60 space-y-2 mb-4 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500 text-[11px]">Offering:</span>
+                    <span className="text-gray-600 text-[11px]">Offering:</span>
                     <span className="font-bold text-emerald-600 dark:text-emerald-400">{offer.teachSkill} ({offer.teachLevel})</span>
                   </div>
                   <div className="flex items-center justify-between border-t border-gray-200/60 dark:border-gray-700/60 pt-1.5">
-                    <span className="text-gray-500 text-[11px]">Seeking:</span>
+                    <span className="text-gray-600 text-[11px]">Seeking:</span>
                     <span className="font-bold text-purple-600 dark:text-purple-400">{offer.learnSkill} ({offer.learnLevel})</span>
                   </div>
                 </div>
               </div>
 
               <div className="pt-4 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
-                <span className="text-[10px] text-gray-400">
+                <span className="text-[10px] text-gray-600">
                   {formatDate(offer.createdAt)}
                 </span>
                 {isMine ? (

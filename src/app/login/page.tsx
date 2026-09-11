@@ -1,26 +1,53 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
-  const { login, allUsers, quickLogin, loginWithGoogle } = useApp();
+  const searchParams = useSearchParams();
+  const { login, allUsers, quickLogin, loginWithGoogle, isGoogleConfigured, isAuthChecking, showToast } = useApp();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    const authError = searchParams.get("error");
+    if (authError) {
+      const message =
+        authError === "oauth_cancelled"
+          ? "Google sign-in was cancelled."
+          : authError === "state_mismatch"
+            ? "Google sign-in failed a security check. Please try again."
+            : "Google sign-in failed. Please try again or use a demo persona.";
+      showToast(message, "error");
+    }
+  }, [searchParams, showToast]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    login(email || "priya.patel@example.com", password || "password123");
-    router.push("/dashboard");
+    setErrorMsg("");
+    if (!email.trim()) {
+      setErrorMsg("Enter your email, or use a demo persona below.");
+      return;
+    }
+    const ok = login(email.trim());
+    if (ok) {
+      router.push("/dashboard");
+    } else {
+      setErrorMsg("No account found with that email. Use Google Sign-In or register below.");
+    }
   };
 
   const handleFastSwitch = (userEmail: string) => {
     quickLogin(userEmail);
     router.push("/dashboard");
+  };
+
+  const handleGoogle = () => {
+    loginWithGoogle();
   };
 
   const demoPersonas = [
@@ -39,15 +66,14 @@ export default function LoginPage() {
           <p className="text-xs text-gray-500 dark:text-gray-400">Continue exchanging skills and learning from peers.</p>
         </div>
 
-        {/* Google Authentication */}
+        {/* Real Google Authentication */}
         <button
           type="button"
-          onClick={() => {
-            loginWithGoogle();
-            router.push("/dashboard");
-          }}
+          onClick={handleGoogle}
           data-testid="google-signin-btn"
-          className="w-full py-2.5 px-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 border border-gray-300 dark:border-gray-600 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-all"
+          disabled={isAuthChecking}
+          title={isGoogleConfigured ? "Continue with Google" : "Google is not configured yet"}
+          className="w-full py-2.5 px-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 disabled:opacity-60 border border-gray-300 dark:border-gray-600 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-all"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -57,6 +83,12 @@ export default function LoginPage() {
           </svg>
           <span>Continue with Google</span>
         </button>
+        {!isGoogleConfigured && !isAuthChecking && (
+          <p className="text-center text-[11px] text-amber-600 dark:text-amber-400 -mt-3">
+            Set <code className="font-mono">AUTH_GOOGLE_CLIENT_ID</code> &amp;{" "}
+            <code className="font-mono">AUTH_GOOGLE_CLIENT_SECRET</code> to enable real Google authentication.
+          </p>
+        )}
 
         <div className="relative flex items-center justify-center">
           <div className="border-t border-gray-200 dark:border-gray-700 w-full" />
@@ -77,8 +109,8 @@ export default function LoginPage() {
                   u.name.includes("Priya")
                     ? "persona-priya"
                     : u.name.includes("Alex")
-                    ? "persona-alex"
-                    : `persona-${u.id}`
+                      ? "persona-alex"
+                      : `persona-${u.id}`
                 }
                 className="p-2 bg-white dark:bg-gray-800 hover:border-indigo-400 border border-gray-200 dark:border-gray-700 rounded-xl text-left flex items-center gap-2 cursor-pointer transition-all"
               >
@@ -91,7 +123,7 @@ export default function LoginPage() {
                 />
                 <div className="truncate">
                   <div className="text-xs font-bold text-gray-900 dark:text-white truncate">{u.name}</div>
-                  <div className="text-[10px] text-gray-400 truncate">{u.skillsTeach[0]?.name}</div>
+                  <div className="text-[10px] text-gray-600 truncate">{u.skillsTeach[0]?.name}</div>
                 </div>
               </button>
             ))}
@@ -100,26 +132,20 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+              Local Account Email
+              <span className="ml-1 font-normal text-gray-400">(for registered users)</span>
+            </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="priya.patel@example.com"
+              placeholder="you@example.com"
               className="w-full px-3.5 py-2.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-hidden dark:text-white"
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3.5 py-2.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-hidden dark:text-white"
-            />
-          </div>
+          {errorMsg && <p className="text-[11px] text-red-500">{errorMsg}</p>}
 
           <button
             type="submit"
@@ -127,6 +153,10 @@ export default function LoginPage() {
           >
             Sign In ➔
           </button>
+          <p className="text-center text-[10px] text-gray-600 leading-relaxed">
+            Local accounts are stored on this device for demo purposes. Use{" "}
+            <span className="text-gray-500">Continue with Google</span> for real authentication.
+          </p>
         </form>
 
         <div className="text-center text-xs text-gray-500 dark:text-gray-400">
@@ -137,5 +167,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[80vh] flex items-center justify-center text-sm text-gray-400">Loading sign-in…</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

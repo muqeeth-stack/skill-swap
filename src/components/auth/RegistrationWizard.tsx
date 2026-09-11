@@ -163,6 +163,7 @@ export function RegistrationWizard() {
                   <button
                     type="button"
                     onClick={() => setOfferedSkillsList(offeredSkillsList.filter((_, i) => i !== idx))}
+                    aria-label="Remove skill"
                     className="text-rose-500 font-bold p-1 cursor-pointer"
                   >
                     ✕
@@ -251,6 +252,7 @@ export function RegistrationWizard() {
                   <button
                     type="button"
                     onClick={() => setDesiredSkillsList(desiredSkillsList.filter((_, i) => i !== idx))}
+                    aria-label="Remove skill"
                     className="text-rose-500 font-bold p-1 cursor-pointer"
                   >
                     ✕
@@ -399,6 +401,7 @@ export function RegistrationWizard() {
                       }
                     }
                   }}
+                  aria-label="Add a language"
                   placeholder="e.g. Spanish, Hindi, French"
                   className="flex-1 px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white"
                 />

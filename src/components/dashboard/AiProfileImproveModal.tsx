@@ -92,6 +92,7 @@ export const AiProfileImproveModal: React.FC<AiProfileImproveModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl cursor-pointer"
           >
             ✕
@@ -134,6 +135,7 @@ export const AiProfileImproveModal: React.FC<AiProfileImproveModalProps> = ({
                   type="checkbox"
                   checked={applyBio}
                   onChange={(e) => setApplyBio(e.target.checked)}
+                  aria-label="Apply enhanced outcome-driven bio"
                   className="rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
                 />
                 1. Enhanced Outcome-Driven Bio
@@ -165,6 +167,7 @@ export const AiProfileImproveModal: React.FC<AiProfileImproveModalProps> = ({
                   type="checkbox"
                   checked={applyGoals}
                   onChange={(e) => setApplyGoals(e.target.checked)}
+                  aria-label="Apply concrete learning milestones"
                   className="rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                 />
                 2. Concrete Learning Milestones
@@ -195,6 +198,7 @@ export const AiProfileImproveModal: React.FC<AiProfileImproveModalProps> = ({
                   type="checkbox"
                   checked={applySkills}
                   onChange={(e) => setApplySkills(e.target.checked)}
+                  aria-label="Apply high-demand sports and AI skills"
                   className="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                 />
                 3. Expand Wishlist with High-Demand Skills (Sports & AI)

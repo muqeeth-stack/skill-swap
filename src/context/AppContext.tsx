@@ -77,6 +77,9 @@ interface AppState {
   isAuthenticated: boolean;
   registrationStep: number;
   theme: "light" | "dark";
+  authProvider: "demo" | "google";
+  isGoogleConfigured: boolean;
+  isAuthChecking: boolean;
   toasts: ToastInfo[];
 }
 
@@ -199,6 +202,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: true,
     registrationStep: 1,
     theme: "light",
+    authProvider: "demo",
+    isGoogleConfigured: false,
+    isAuthChecking: false,
     toasts: [],
   });
 
@@ -262,6 +268,90 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state, isHydrated]);
 
+  // Check for a real Google OAuth session on mount (external auth store sync)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const statusRes = await fetch("/api/auth/status", { cache: "no-store" });
+        const status = (await statusRes.json()) as { googleConfigured: boolean };
+        if (cancelled) return;
+        if (!status.googleConfigured) {
+          setState((prev) => ({ ...prev, isGoogleConfigured: false, isAuthChecking: false }));
+          return;
+        }
+        setState((prev) => ({ ...prev, isGoogleConfigured: true, isAuthChecking: true }));
+        const meRes = await fetch("/api/auth/me", { cache: "no-store" });
+        const me = (await meRes.json()) as {
+          user?: { id: string; name: string; email: string; avatar: string | null } | null;
+        };
+        if (cancelled) return;
+        if (me.user) {
+          setState((prev) => {
+            const existing = prev.users.find(
+              (u: User) => u.email.toLowerCase() === me.user!.email.toLowerCase()
+            );
+            const googleUser: User = existing
+              ? {
+                  ...existing,
+                  name: me.user!.name || existing.name,
+                  avatar: me.user!.avatar || existing.avatar,
+                }
+              : {
+                  id: me.user!.id,
+                  name: me.user!.name || "Google Learner",
+                  email: me.user!.email,
+                  avatar: me.user!.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(me.user!.name || "learner")}`,
+                  bio: "Joined SynapseLearn with Google.",
+                  location: "Remote",
+                  preferredLanguages: ["English"],
+                  weeklyHours: 3,
+                  availableDays: [1, 2, 3, 4, 5],
+                  availableTimes: ["evening"],
+                  preferredMethods: ["video", "chat"],
+                  learningGoals: ["Skill mastery"],
+                  interests: [],
+                  skillsTeach: [],
+                  skillsLearn: [],
+                  credits: 120,
+                  isLinkedInVerified: false,
+                  isGitHubVerified: false,
+                  rating: 5.0,
+                  totalReviews: 0,
+                  totalSessionsTaught: 0,
+                  totalSessionsLearned: 0,
+                  completedExchanges: 0,
+                  streakDays: 1,
+                  badges: ["New to SynapseLearn"],
+                  role: "user",
+                  createdAt: new Date().toISOString(),
+                };
+            const users = existing
+              ? prev.users.map((u: User) => (u.id === existing.id ? googleUser : u))
+              : [googleUser, ...prev.users];
+            return {
+              ...prev,
+              users,
+              allUsers: users,
+              currentUser: googleUser,
+              isAuthenticated: true,
+              isAuthChecking: false,
+              authProvider: "google",
+            };
+          });
+        } else {
+          setState((prev) => ({ ...prev, isAuthChecking: false, authProvider: "demo" }));
+        }
+      } catch (err) {
+        console.warn("Could not check Google session:", err);
+        if (!cancelled) setState((prev) => ({ ...prev, isAuthChecking: false }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const showToast = useCallback((message: string, type: "success" | "info" | "warning" | "error" = "info") => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
     setState((prev) => ({
@@ -309,11 +399,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [state.users, showToast]);
 
   const loginWithGoogle = useCallback(() => {
-    const defaultUser = state.users.find((u) => u.name === "Priya Patel") || state.users[0];
-    setState((prev) => ({ ...prev, currentUser: defaultUser, isAuthenticated: true }));
-    showToast(`Signed in with Google as ${defaultUser.name}`, "success");
+    if (!state.isGoogleConfigured) {
+      showToast(
+        "Google sign-in is not configured yet. Set AUTH_GOOGLE_CLIENT_ID & AUTH_GOOGLE_CLIENT_SECRET, or use a demo persona.",
+        "warning"
+      );
+      return false;
+    }
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- OAuth requires a full document navigation so the server redirect chain sets session cookies
+    window.location.assign("/api/auth/google");
     return true;
-  }, [state.users, showToast]);
+  }, [state.isGoogleConfigured, showToast]);
 
   const quickLogin = useCallback((userEmail: string) => {
     const found = state.users.find((u) => u.email === userEmail);
@@ -324,9 +420,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [state.users, showToast]);
 
   const logout = useCallback(() => {
-    setState((prev) => ({ ...prev, currentUser: null, isAuthenticated: false }));
+    if (state.authProvider === "google") {
+      try {
+        fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+      } catch {
+        // Network failure should not block local sign-out
+      }
+    }
+    setState((prev) => ({
+      ...prev,
+      currentUser: null,
+      isAuthenticated: false,
+      authProvider: "demo",
+    }));
     showToast("Signed out successfully", "info");
-  }, [showToast]);
+  }, [state.authProvider, showToast]);
 
   const register = useCallback((step: number, data: Partial<User>) => {
     setState((prev) => {
@@ -1248,6 +1356,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: true,
       registrationStep: 1,
       theme: "light",
+      authProvider: "demo",
+      isGoogleConfigured: false,
+      isAuthChecking: false,
       toasts: [],
     });
     showToast("Application state reset to default demo data", "info");

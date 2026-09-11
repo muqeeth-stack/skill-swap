@@ -3,15 +3,19 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { AiAssistantModal } from "@/components/ai/AiAssistantModal";
+
+const AiAssistantModal = dynamic(() => import("@/components/ai/AiAssistantModal").then((m) => m.default), { ssr: false });
+const GlobalSearchModal = dynamic(() => import("@/components/search/GlobalSearchModal").then((m) => m.GlobalSearchModal), { ssr: false });
 
 export function Navbar() {
   const pathname = usePathname();
   const { currentUser, allUsers, quickLogin, logout, theme, toggleTheme } = useApp();
   const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [switchUserDropdownOpen, setSwitchUserDropdownOpen] = useState(false);
 
@@ -47,7 +51,7 @@ export function Navbar() {
                 <span className="font-extrabold text-base tracking-tight text-gray-900 dark:text-white group-hover:text-indigo-600 transition-colors">
                   SYNAPSE<span className="text-indigo-600 dark:text-indigo-400">LEARN</span>
                 </span>
-                <span className="text-[10px] font-medium tracking-wide text-gray-500 dark:text-gray-400 -mt-1 hidden sm:block">
+                <span className="text-[10px] font-medium tracking-wide text-gray-600 dark:text-gray-400 -mt-1 hidden sm:block">
                   Learn. Share. Connect.
                 </span>
               </div>
@@ -80,9 +84,21 @@ export function Navbar() {
 
           <div className="flex items-center gap-1.5 sm:gap-2.5">
             <button
+              onClick={() => setSearchOpen(true)}
+              data-testid="global-search-btn"
+              title="Search"
+              aria-label="Search SynapseLearn"
+              className="px-2.5 sm:px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700/70 text-gray-600 dark:text-gray-300 border border-gray-200/80 dark:border-gray-700/80 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+            >
+              <span>🔍</span>
+              <span className="hidden sm:inline">{pathname === "/matches" ? "Search matches" : "Search"}</span>
+            </button>
+
+            <button
               onClick={() => setAiModalOpen(true)}
               data-testid="ai-assistant-btn"
               title="AI Assistant"
+              aria-label="AI Assistant"
               className="px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/50 dark:to-purple-950/50 hover:from-indigo-100 hover:to-purple-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
             >
               <span className="text-amber-500 animate-pulse">✨</span>
@@ -102,6 +118,7 @@ export function Navbar() {
                   onClick={toggleTheme}
                   data-testid="theme-toggle"
                   title="Toggle Theme"
+                  aria-label="Toggle theme"
                   className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                 >
                   {theme === "dark" ? "☀️" : "🌙"}
@@ -140,7 +157,7 @@ export function Navbar() {
                           />
                           <div className="truncate">
                             <div className="truncate">{u.name}</div>
-                            <div className="text-[10px] text-gray-400 truncate">{u.skillsTeach[0]?.name}</div>
+                            <div className="text-[10px] text-gray-600 truncate">{u.skillsTeach[0]?.name}</div>
                           </div>
                         </button>
                       ))}
@@ -167,7 +184,7 @@ export function Navbar() {
                     <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50">
                       <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
                         <p className="text-xs font-bold text-gray-900 dark:text-white">{currentUser.name}</p>
-                        <p className="text-[11px] text-gray-400 truncate">{currentUser.email}</p>
+                        <p className="text-[11px] text-gray-600 truncate">{currentUser.email}</p>
                       </div>
                       <Link
                         href="/profile"
@@ -239,6 +256,7 @@ export function Navbar() {
       </header>
 
       <AiAssistantModal isOpen={aiModalOpen} onClose={() => setAiModalOpen(false)} />
+      <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }

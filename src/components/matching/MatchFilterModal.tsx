@@ -100,7 +100,7 @@ export function MatchFilterModal({ isOpen, onClose }: MatchFilterModalProps) {
               <p className="text-xs text-gray-500 dark:text-gray-400">Configure how SynapseLearn ranks your synergy with other learners</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 cursor-pointer">
+          <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 cursor-pointer">
             ✕
           </button>
         </div>
@@ -142,6 +142,7 @@ export function MatchFilterModal({ isOpen, onClose }: MatchFilterModalProps) {
               max="100"
               value={Math.round(weights.skillExchange * 100)}
               onChange={(e) => handleSliderChange("skillExchange", Number(e.target.value))}
+              aria-label="Skill Exchange Synergy"
               className="w-full accent-indigo-600 cursor-pointer"
             />
           </div>
@@ -158,6 +159,7 @@ export function MatchFilterModal({ isOpen, onClose }: MatchFilterModalProps) {
               max="100"
               value={Math.round(weights.skillLevel * 100)}
               onChange={(e) => handleSliderChange("skillLevel", Number(e.target.value))}
+              aria-label="Skill Level Compatibility"
               className="w-full accent-indigo-600 cursor-pointer"
             />
           </div>
@@ -174,6 +176,7 @@ export function MatchFilterModal({ isOpen, onClose }: MatchFilterModalProps) {
               max="100"
               value={Math.round(weights.learningGoals * 100)}
               onChange={(e) => handleSliderChange("learningGoals", Number(e.target.value))}
+              aria-label="Shared Learning Goals"
               className="w-full accent-indigo-600 cursor-pointer"
             />
           </div>
@@ -190,6 +193,7 @@ export function MatchFilterModal({ isOpen, onClose }: MatchFilterModalProps) {
               max="100"
               value={Math.round(weights.availability * 100)}
               onChange={(e) => handleSliderChange("availability", Number(e.target.value))}
+              aria-label="Availability Overlap"
               className="w-full accent-indigo-600 cursor-pointer"
             />
           </div>
@@ -206,6 +210,7 @@ export function MatchFilterModal({ isOpen, onClose }: MatchFilterModalProps) {
               max="100"
               value={Math.round(weights.preferences * 100)}
               onChange={(e) => handleSliderChange("preferences", Number(e.target.value))}
+              aria-label="Format and Preferences"
               className="w-full accent-indigo-600 cursor-pointer"
             />
           </div>

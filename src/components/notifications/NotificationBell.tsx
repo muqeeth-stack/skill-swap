@@ -84,7 +84,7 @@ export default function NotificationBell() {
                   }`}
                 >
                   <Link
-                    href={notif.link || "#"}
+                    href={notif.link || "/connections"}
                     onClick={() => setIsOpen(false)}
                     className="block"
                   >
@@ -99,7 +99,7 @@ export default function NotificationBell() {
                     <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">
                       {notif.message}
                     </p>
-                    <span className="text-[10px] text-gray-400 mt-2 block">
+                    <span className="text-[10px] text-gray-600 mt-2 block">
                       {formatTime(notif.createdAt)}
                     </span>
                   </Link>

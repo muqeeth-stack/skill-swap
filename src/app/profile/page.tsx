@@ -192,31 +192,31 @@ function ProfileContent() {
               <div className="text-xl font-extrabold text-amber-500">
                 ★ {displayedUser.rating.toFixed(2)}
               </div>
-              <div className="text-[11px] text-gray-400 font-medium">{displayedUser.totalReviews} Reviews</div>
+              <div className="text-[11px] text-gray-600 font-medium">{displayedUser.totalReviews} Reviews</div>
             </div>
             <div className="p-2">
               <div className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">
                 {displayedUser.totalSessionsTaught}
               </div>
-              <div className="text-[11px] text-gray-400 font-medium">Sessions Taught</div>
+              <div className="text-[11px] text-gray-600 font-medium">Sessions Taught</div>
             </div>
             <div className="p-2">
               <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400">
                 {displayedUser.totalSessionsLearned}
               </div>
-              <div className="text-[11px] text-gray-400 font-medium">Sessions Learned</div>
+              <div className="text-[11px] text-gray-600 font-medium">Sessions Learned</div>
             </div>
             <div className="p-2">
               <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
                 {displayedUser.completedExchanges}
               </div>
-              <div className="text-[11px] text-gray-400 font-medium">Completed Swaps</div>
+              <div className="text-[11px] text-gray-600 font-medium">Completed Swaps</div>
             </div>
             <div className="p-2 col-span-2 sm:col-span-1">
               <div className="text-xl font-extrabold text-rose-500">
                 🔥 {displayedUser.streakDays}
               </div>
-              <div className="text-[11px] text-gray-400 font-medium">Day Streak</div>
+              <div className="text-[11px] text-gray-600 font-medium">Day Streak</div>
             </div>
           </div>
 
@@ -418,7 +418,7 @@ function ProfileContent() {
                         Focus: {skill.subSkill}
                       </div>
                     )}
-                    <div className="text-[11px] text-gray-400">
+                    <div className="text-[11px] text-gray-600">
                       Category: {skill.category} · {skill.yearsOfExp || 1} yrs experience
                     </div>
                   </div>
@@ -469,7 +469,7 @@ function ProfileContent() {
                         Focus: {skill.subSkill}
                       </div>
                     )}
-                    <div className="text-[11px] text-gray-400">
+                    <div className="text-[11px] text-gray-600">
                       Category: {skill.category}
                     </div>
                   </div>
@@ -503,7 +503,7 @@ function ProfileContent() {
             </div>
             <div className="text-right">
               <div className="text-2xl font-black text-amber-500">★ {displayedUser.rating.toFixed(2)}</div>
-              <div className="text-[11px] text-gray-400">{userReviews.length} total reviews</div>
+              <div className="text-[11px] text-gray-600">{userReviews.length} total reviews</div>
             </div>
           </div>
 
@@ -511,7 +511,7 @@ function ProfileContent() {
             <div className="p-8 text-center bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 space-y-2">
               <div className="text-3xl">⭐</div>
               <div className="text-xs font-bold text-gray-600 dark:text-gray-300">No reviews yet</div>
-              <p className="text-[11px] text-gray-400">Completed sessions and ratings will appear here.</p>
+              <p className="text-[11px] text-gray-600">Completed sessions and ratings will appear here.</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -535,7 +535,7 @@ function ProfileContent() {
                           <div className="text-xs font-bold text-gray-900 dark:text-white">
                             {reviewer?.name || "Verified Learner"}
                           </div>
-                          <div className="text-[10px] text-gray-400">Skill: {rev.skillTaught}</div>
+                          <div className="text-[10px] text-gray-600">Skill: {rev.skillTaught}</div>
                         </div>
                       </div>
 
@@ -549,7 +549,7 @@ function ProfileContent() {
                       &ldquo;{rev.comment}&rdquo;
                     </p>
 
-                    <div className="flex items-center justify-between text-[10px] text-gray-400 pt-1 border-t border-gray-200/50 dark:border-gray-700/50">
+                    <div className="flex items-center justify-between text-[10px] text-gray-600 pt-1 border-t border-gray-200/50 dark:border-gray-700/50">
                       <span>Quality: {rev.sessionQuality || "Excellent"}</span>
                       <span>{new Date(rev.createdAt).toLocaleDateString()}</span>
                     </div>
@@ -591,7 +591,7 @@ function ProfileContent() {
                   </div>
                   <div className="space-y-1">
                     <h4 className="text-xs font-bold text-gray-900 dark:text-white">{def.title}</h4>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                    <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed">
                       {def.description}
                     </p>
                   </div>

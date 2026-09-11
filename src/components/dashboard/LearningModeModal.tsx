@@ -98,6 +98,7 @@ export function LearningModeModal({
                         type="checkbox"
                         checked={isDone}
                         onChange={() => toggleStep(milestone.step)}
+                        aria-label={`Step ${milestone.step}: ${milestone.title}`}
                         className="w-4 h-4 rounded text-indigo-600 cursor-pointer"
                       />
                       <span className="text-xs font-bold text-gray-900 dark:text-white">
@@ -110,7 +111,7 @@ export function LearningModeModal({
                       </span>
                     )}
                   </div>
-                  <ul className="pl-7 mt-2 space-y-1 text-[11px] text-gray-500 dark:text-gray-400 list-disc">
+                  <ul className="pl-7 mt-2 space-y-1 text-[11px] text-gray-600 dark:text-gray-400 list-disc">
                     {milestone.tasks.map((task, tidx) => (
                       <li key={tidx}>{task}</li>
                     ))}
@@ -157,7 +158,7 @@ export function LearningModeModal({
                     />
                     <div>
                       <div className="text-xs font-bold text-gray-900 dark:text-white">{mentor.name}</div>
-                      <div className="text-[10px] text-gray-400">★ {mentor.rating.toFixed(1)}</div>
+                      <div className="text-[10px] text-gray-600">★ {mentor.rating.toFixed(1)}</div>
                     </div>
                   </div>
                   <button

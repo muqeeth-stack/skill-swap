@@ -307,7 +307,7 @@ export const MySkillsSection: React.FC<MySkillsSectionProps> = ({
                       <h4 className="font-bold text-sm text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                         {skill.name}
                       </h4>
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400 capitalize">
+                      <span className="text-[10px] text-gray-600 dark:text-gray-400 capitalize">
                         {skill.category.replace("_", " ")}
                         {skill.yearsOfExp ? ` • ${skill.yearsOfExp} yrs exp` : ""}
                       </span>
@@ -323,6 +323,7 @@ export const MySkillsSection: React.FC<MySkillsSectionProps> = ({
                     <button
                       onClick={() => handleRemoveSkill(skill.name, activeTab)}
                       title="Remove skill"
+                      aria-label="Remove skill"
                       className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-xs p-1 rounded-md transition-all cursor-pointer"
                     >
                       ✕
@@ -332,7 +333,7 @@ export const MySkillsSection: React.FC<MySkillsSectionProps> = ({
 
                 {/* Progress bar */}
                 <div className="space-y-1">
-                  <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                  <div className="flex justify-between text-[10px] text-gray-600 dark:text-gray-400 font-medium">
                     <span>Proficiency Mastery</span>
                     <span>{progress}%</span>
                   </div>

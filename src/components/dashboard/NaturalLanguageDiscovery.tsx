@@ -60,6 +60,7 @@ export function NaturalLanguageDiscovery({
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleExecuteSearch()}
           placeholder="e.g. 'I want to learn cricket fast bowling and I can teach Next.js'..."
+          aria-label="Search peers in natural language"
           className="w-full bg-transparent px-2 py-2 text-xs sm:text-sm text-white placeholder-indigo-200/70 focus:outline-none"
         />
         <button
@@ -126,7 +127,7 @@ export function NaturalLanguageDiscovery({
                       />
                       <div>
                         <div className="font-bold text-xs">{match.targetUser.name}</div>
-                        <div className="text-[10px] text-gray-400">{match.targetUser.location}</div>
+                        <div className="text-[10px] text-gray-600">{match.targetUser.location}</div>
                       </div>
                     </div>
                     <span className="px-2 py-0.5 text-[10px] font-extrabold bg-emerald-100 text-emerald-800 rounded-md">

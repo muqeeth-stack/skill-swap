@@ -44,7 +44,7 @@ export default function CalendarPage() {
 
                 <div className="space-y-2">
                   {slotsForDay.length === 0 ? (
-                    <div className="text-[11px] text-gray-400">No active slots</div>
+                    <div className="text-[11px] text-gray-600">No active slots</div>
                   ) : (
                     slotsForDay.map((slot) => (
                       <div

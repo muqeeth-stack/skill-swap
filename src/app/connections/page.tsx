@@ -89,7 +89,7 @@ export default function ConnectionsPage() {
                   />
                   <div>
                     <h3 className="font-bold text-gray-900 dark:text-white text-sm">{otherUser.name}</h3>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">{otherUser.location}</p>
+                    <p className="text-[11px] text-gray-600 dark:text-gray-400">{otherUser.location}</p>
                     <div className="text-[10px] text-emerald-600 font-medium">
                       🪙 {otherUser.credits} credits • ★ {otherUser.rating.toFixed(1)}
                     </div>

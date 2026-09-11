@@ -48,6 +48,7 @@ export default function BrowsePage() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by name, skill, drill, or city..."
+          aria-label="Search people by name, skill, or city"
           className="w-full px-3.5 py-2.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white"
         />
 
@@ -93,7 +94,7 @@ export default function BrowsePage() {
                   <Link href={`/profile?id=${user.id}`} className="font-bold text-sm text-gray-900 dark:text-white hover:text-indigo-600">
                     {user.name}
                   </Link>
-                  <p className="text-[11px] text-gray-500">{user.location}</p>
+                  <p className="text-[11px] text-gray-600 dark:text-gray-400">{user.location}</p>
                 </div>
               </div>
 
@@ -102,7 +103,7 @@ export default function BrowsePage() {
               </p>
 
               <div className="space-y-1.5 mb-3">
-                <div className="text-[10px] uppercase font-bold text-gray-400">Can Teach:</div>
+                <div className="text-[10px] uppercase font-bold text-gray-600">Can Teach:</div>
                 <div className="flex flex-wrap gap-1">
                   {user.skillsTeach.map((s, idx) => (
                     <span key={idx} className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[11px]">

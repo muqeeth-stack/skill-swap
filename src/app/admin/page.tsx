@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useApp } from "@/context/AppContext";
 import { SkillCategory, SkillLevel } from "@/types";
 
@@ -31,7 +32,7 @@ export default function AdminPage() {
   const [videoSkill, setVideoSkill] = useState("");
   const [videoLevel, setVideoLevel] = useState<SkillLevel>("Intermediate");
   const [videoTeacherId, setVideoTeacherId] = useState(allUsers[0]?.id || "u1");
-  const [videoUrl, setVideoUrl] = useState("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
+  const [videoUrl, setVideoUrl] = useState("https://media.w3.org/2010/05/video/movie_300.mp4");
   const [videoThumb, setVideoThumb] = useState("https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800");
   const [videoDuration, setVideoDuration] = useState(600);
   const [videoObjectives, setVideoObjectives] = useState("");
@@ -467,24 +468,24 @@ export default function AdminPage() {
                           <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 uppercase">
                             {rec.category}
                           </span>
-                          <span className="text-[10px] text-gray-400 font-semibold">{rec.level}</span>
+                          <span className="text-[10px] text-gray-600 font-semibold">{rec.level}</span>
                         </div>
                         <h4 className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
                           {rec.title}
                         </h4>
-                        <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                        <div className="text-[11px] text-gray-600 dark:text-gray-400">
                           Instructor: {teacher?.name || "Synapse Mentor"} · {Math.floor(rec.duration / 60)} mins · 👁️ {rec.views} views
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <a
+                      <Link
                         href="/videos"
                         className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-semibold"
                       >
                         View in Player ↗
-                      </a>
+                      </Link>
                       <button
                         onClick={() => deleteRecording(rec.id)}
                         className="px-3 py-1.5 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-bold rounded-xl transition-all cursor-pointer"

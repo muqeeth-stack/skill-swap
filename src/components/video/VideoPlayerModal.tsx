@@ -270,6 +270,7 @@ export function VideoPlayerModal({ recording, onClose }: VideoPlayerModalProps) 
           {!videoError && !isPlaying && !hasPromptedResume && (
             <button
               onClick={togglePlay}
+              aria-label="Play video"
               className="absolute z-10 w-16 h-16 rounded-full bg-indigo-600/90 hover:bg-indigo-500 text-white flex items-center justify-center text-2xl shadow-xl hover:scale-105 transition-all cursor-pointer"
               title="Play Video"
             >
@@ -289,6 +290,7 @@ export function VideoPlayerModal({ recording, onClose }: VideoPlayerModalProps) 
                 step={0.1}
                 value={currentTime}
                 onChange={handleSeek}
+                aria-label="Seek"
                 className="w-full h-1.5 bg-white/30 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:h-2 transition-all"
                 title="Seek"
               />
@@ -311,7 +313,7 @@ export function VideoPlayerModal({ recording, onClose }: VideoPlayerModalProps) 
 
                 {/* Volume & Mute */}
                 <div className="hidden sm:flex items-center gap-1.5 ml-2">
-                  <button onClick={toggleMute} className="hover:text-indigo-400 cursor-pointer text-sm">
+                  <button onClick={toggleMute} aria-label={isMuted || volume === 0 ? "Unmute" : "Mute"} className="hover:text-indigo-400 cursor-pointer text-sm">
                     {isMuted || volume === 0 ? "🔇" : "🔊"}
                   </button>
                   <input
@@ -321,6 +323,7 @@ export function VideoPlayerModal({ recording, onClose }: VideoPlayerModalProps) 
                     step={0.05}
                     value={isMuted ? 0 : volume}
                     onChange={handleVolumeChange}
+                    aria-label="Volume"
                     className="w-16 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer accent-indigo-400"
                     title="Volume"
                   />
@@ -493,6 +496,7 @@ export function VideoPlayerModal({ recording, onClose }: VideoPlayerModalProps) 
                 <textarea
                   value={studentNotes}
                   onChange={(e) => setStudentNotes(e.target.value)}
+                  aria-label="Study notebook"
                   placeholder={`Write your key takeaways, timestamp notes (e.g. 03:20 cover drive elbow angle), and practice drill outcomes here...`}
                   rows={5}
                   className="w-full p-3.5 text-xs bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"

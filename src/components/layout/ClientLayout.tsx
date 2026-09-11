@@ -1,13 +1,33 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { AppProvider, useApp } from "@/context/AppContext";
 import { Navbar } from "./Navbar";
 import { MobileNav } from "./MobileNav";
 import { ToastContainer } from "@/components/ui/Toast";
 
+const PROTECTED_PATHS = [
+  "/dashboard",
+  "/matches",
+  "/messages",
+  "/connections",
+  "/settings",
+  "/profile",
+  "/paths",
+  "/groups",
+  "/exchange",
+  "/videos",
+  "/skill-graph",
+  "/recordings",
+  "/booksync",
+  "/admin",
+];
+
 function LayoutContent({ children }: { children: React.ReactNode }) {
-  const { theme } = useApp();
+  const { theme, authProvider, isAuthChecking, currentUser } = useApp();
+  const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     if (theme === "dark") {
@@ -16,6 +36,29 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.remove("dark");
     }
   }, [theme]);
+
+  // Protect private routes when authenticated via a real Google session
+  useEffect(() => {
+    if (authProvider !== "google") return;
+    if (isAuthChecking) return;
+    const isProtected = PROTECTED_PATHS.some(
+      (p) => pathname === p || pathname.startsWith(p + "/")
+    );
+    if (isProtected && !currentUser) {
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    }
+  }, [authProvider, isAuthChecking, currentUser, pathname, router]);
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 gap-3">
+        <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white text-xl font-bold animate-pulse">
+          ⚡
+        </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Restoring your session…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 transition-colors pb-16 lg:pb-0 overflow-x-hidden">

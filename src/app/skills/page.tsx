@@ -106,6 +106,7 @@ function SkillsContent() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search subskills, drills..."
+            aria-label="Search subskills and drills"
             className="w-full px-3.5 py-2 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-hidden dark:text-white"
           />
         </div>
@@ -146,7 +147,7 @@ function SkillsContent() {
                       </p>
 
                       <div className="space-y-1 mb-4">
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-gray-600">
                           Subdisciplines & Drills:
                         </div>
                         <div className="flex flex-wrap gap-1">

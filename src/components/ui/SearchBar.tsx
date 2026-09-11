@@ -40,6 +40,7 @@ export default function SearchBar({ value, onChange, placeholder = "Search skill
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
+        aria-label="Search"
         placeholder={placeholder}
         className="w-full pl-10 pr-20 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-violet-300 transition-all"
       />
@@ -47,6 +48,7 @@ export default function SearchBar({ value, onChange, placeholder = "Search skill
         {value && (
           <button
             onClick={() => onChange("")}
+            aria-label="Clear search"
             className="p-1 rounded-md hover:bg-gray-200 transition-colors"
           >
             <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

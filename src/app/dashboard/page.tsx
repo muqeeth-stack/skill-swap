@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import { formatDate } from "@/lib/dateUtils";
@@ -9,6 +10,7 @@ import { UserSkill } from "@/types";
 
 // Dashboard Specialized Subcomponents
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { WhatToDoNext } from "@/components/dashboard/WhatToDoNext";
 import { SynapseDailyBrief } from "@/components/dashboard/SynapseDailyBrief";
 import { NaturalLanguageDiscovery } from "@/components/dashboard/NaturalLanguageDiscovery";
 import { PerfectExchangeSection } from "@/components/dashboard/PerfectExchangeSection";
@@ -18,13 +20,13 @@ import { SkillGraphExplorer } from "@/components/dashboard/SkillGraphExplorer";
 import { AiRecommendationsSection } from "@/components/dashboard/AiRecommendationsSection";
 import { CommunityDiscoverySection } from "@/components/dashboard/CommunityDiscoverySection";
 
-// Interactive Modals
-import { LearningModeModal } from "@/components/dashboard/LearningModeModal";
-import { AiProjectGeneratorModal } from "@/components/dashboard/AiProjectGeneratorModal";
-import { AiProfileImproveModal } from "@/components/dashboard/AiProfileImproveModal";
-import { TrustSafetyModal } from "@/components/dashboard/TrustSafetyModal";
-import { ChatDrawer } from "@/components/chat/ChatDrawer";
-import { AiAssistantModal } from "@/components/ai/AiAssistantModal";
+// Interactive Modals (lazy-loaded for faster initial paint)
+const LearningModeModal = dynamic(() => import("@/components/dashboard/LearningModeModal").then((m) => m.LearningModeModal), { ssr: false });
+const AiProjectGeneratorModal = dynamic(() => import("@/components/dashboard/AiProjectGeneratorModal").then((m) => m.AiProjectGeneratorModal), { ssr: false });
+const AiProfileImproveModal = dynamic(() => import("@/components/dashboard/AiProfileImproveModal").then((m) => m.AiProfileImproveModal), { ssr: false });
+const TrustSafetyModal = dynamic(() => import("@/components/dashboard/TrustSafetyModal").then((m) => m.TrustSafetyModal), { ssr: false });
+const ChatDrawer = dynamic(() => import("@/components/chat/ChatDrawer").then((m) => m.ChatDrawer), { ssr: false });
+const AiAssistantModal = dynamic(() => import("@/components/ai/AiAssistantModal").then((m) => m.default), { ssr: false });
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -143,7 +145,10 @@ export default function DashboardPage() {
         onOpenAiAssistant={() => setIsAiModalOpen(true)}
       />
 
-      {/* 2. Quick Action Navigation Grid */}
+      {/* 2. What To Do Next (prioritized actions) */}
+      <WhatToDoNext onOpenAiAssistant={() => setIsAiModalOpen(true)} />
+
+      {/* 3. Quick Action Navigation Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
           {

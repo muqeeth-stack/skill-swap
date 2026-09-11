@@ -173,6 +173,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center justify-center text-xs font-bold cursor-pointer transition-all"
           >
             ✕
@@ -308,7 +309,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                     >
                       <div>
                         <div className="font-bold text-gray-900 dark:text-white">{skill.name}</div>
-                        <div className="text-[10px] text-gray-500">
+                        <div className="text-[10px] text-gray-600">
                           {skill.category} · {skill.level} Tier · {skill.yearsOfExp || 1} yrs exp
                         </div>
                       </div>
@@ -329,6 +330,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="text"
+                    aria-label="Skill name"
                     placeholder="Skill Name (e.g. React, Fast Bowling)"
                     value={newTeachName}
                     onChange={(e) => setNewTeachName(e.target.value)}
@@ -337,6 +339,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                   <select
                     value={newTeachCat}
                     onChange={(e) => setNewTeachCat(e.target.value)}
+                    aria-label="Category"
                     className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white"
                   >
                     <option value="technology">Technology</option>
@@ -350,6 +353,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                   <select
                     value={newTeachLevel}
                     onChange={(e) => setNewTeachLevel(e.target.value as SkillLevel)}
+                    aria-label="Proficiency level"
                     className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white"
                   >
                     <option value="Beginner">Beginner</option>
@@ -362,6 +366,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                     min={1}
                     max={50}
                     placeholder="Years of Exp"
+                    aria-label="Years of experience"
                     value={newTeachYears}
                     onChange={(e) => setNewTeachYears(Number(e.target.value))}
                     className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white"
@@ -412,6 +417,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <input
                     type="text"
+                    aria-label="Skill name"
                     placeholder="Skill Name (e.g. Python, Video Editing)"
                     value={newLearnName}
                     onChange={(e) => setNewLearnName(e.target.value)}
@@ -420,6 +426,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                   <select
                     value={newLearnCat}
                     onChange={(e) => setNewLearnCat(e.target.value)}
+                    aria-label="Category"
                     className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white"
                   >
                     <option value="technology">Technology</option>
@@ -433,6 +440,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                   <select
                     value={newLearnLevel}
                     onChange={(e) => setNewLearnLevel(e.target.value as SkillLevel)}
+                    aria-label="Target level"
                     className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white"
                   >
                     <option value="Beginner">Beginner</option>
@@ -465,7 +473,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                       className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 rounded-full font-medium flex items-center gap-1.5 border border-indigo-200 dark:border-indigo-800"
                     >
                       <span>{goal}</span>
-                      <button onClick={() => handleRemoveGoal(goal)} className="text-gray-400 hover:text-rose-500">
+                      <button onClick={() => handleRemoveGoal(goal)} aria-label={`Remove goal ${goal}`} className="text-gray-400 hover:text-rose-500">
                         ✕
                       </button>
                     </span>
@@ -475,6 +483,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                   <input
                     type="text"
                     placeholder="Add a new milestone or goal..."
+                    aria-label="New learning goal"
                     value={newGoal}
                     onChange={(e) => setNewGoal(e.target.value)}
                     className="flex-1 p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white"
@@ -499,7 +508,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                       className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full font-medium flex items-center gap-1.5 border border-gray-200 dark:border-gray-700"
                     >
                       <span>{item}</span>
-                      <button onClick={() => handleRemoveInterest(item)} className="text-gray-400 hover:text-rose-500">
+                      <button onClick={() => handleRemoveInterest(item)} aria-label={`Remove interest ${item}`} className="text-gray-400 hover:text-rose-500">
                         ✕
                       </button>
                     </span>
@@ -509,6 +518,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                   <input
                     type="text"
                     placeholder="Add an interest..."
+                    aria-label="New interest"
                     value={newInterest}
                     onChange={(e) => setNewInterest(e.target.value)}
                     className="flex-1 p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white"
@@ -533,7 +543,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                       className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 rounded-full font-medium flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800"
                     >
                       <span>{lang}</span>
-                      <button onClick={() => handleRemoveLang(lang)} className="text-gray-400 hover:text-rose-500">
+                      <button onClick={() => handleRemoveLang(lang)} aria-label={`Remove language ${lang}`} className="text-gray-400 hover:text-rose-500">
                         ✕
                       </button>
                     </span>
@@ -543,6 +553,7 @@ export function ProfileEditorModal({ user, isOpen, onClose }: ProfileEditorModal
                   <input
                     type="text"
                     placeholder="Add language (e.g. Spanish, Hindi)..."
+                    aria-label="New language"
                     value={newLang}
                     onChange={(e) => setNewLang(e.target.value)}
                     className="flex-1 p-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white"

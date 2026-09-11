@@ -118,7 +118,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
             <div className={`px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-1.5 shadow-xs ${getScoreColor(score.overallScore)}`}>
               <span className="text-base font-extrabold">{score.overallScore}% Match</span>
             </div>
-            <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 text-right font-medium">
+            <span className="text-[10px] text-gray-600 dark:text-gray-400 mt-1 text-right font-medium">
               {getScoreBadge(score.overallScore, score.matchType)}
             </span>
           </div>
@@ -131,7 +131,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
 
         {/* Skills They Teach */}
         <div className="mb-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5 flex items-center justify-between">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-500 mb-1.5 flex items-center justify-between">
             <span>Can Teach You</span>
             <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-normal">
               {user.skillsTeach.length} skills
@@ -155,7 +155,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
               );
             })}
             {user.skillsTeach.length > 3 && (
-              <span className="px-2 py-1 text-[11px] text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <span className="px-2 py-1 text-[11px] text-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 +{user.skillsTeach.length - 3} more
               </span>
             )}
@@ -164,7 +164,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
 
         {/* Skills They Want To Learn */}
         <div className="mb-4">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1.5 flex items-center justify-between">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-500 mb-1.5 flex items-center justify-between">
             <span>Wants To Learn From You</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -226,7 +226,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
 
               {/* Dimension Score Bars */}
               <div className="mt-3 pt-2 border-t border-gray-200/60 dark:border-gray-700/60 space-y-1.5">
-                <div className="flex justify-between text-[11px] text-gray-500 dark:text-gray-400">
+                <div className="flex justify-between text-[11px] text-gray-600 dark:text-gray-400">
                   <span>Skill Complementarity (35%)</span>
                   <span className="font-semibold text-gray-800 dark:text-gray-200">{score.skillExchangeScore}%</span>
                 </div>
@@ -234,7 +234,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
                   <div className="bg-indigo-600 h-full rounded-full transition-all duration-500" style={{ width: `${score.skillExchangeScore}%` }} />
                 </div>
 
-                <div className="flex justify-between text-[11px] text-gray-500 dark:text-gray-400 pt-1">
+                <div className="flex justify-between text-[11px] text-gray-600 dark:text-gray-400 pt-1">
                   <span>Availability Overlap (15%)</span>
                   <span className="font-semibold text-gray-800 dark:text-gray-200">{score.availabilityScore}%</span>
                 </div>
@@ -242,7 +242,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
                   <div className="bg-teal-500 h-full rounded-full transition-all duration-500" style={{ width: `${score.availabilityScore}%` }} />
                 </div>
 
-                <div className="flex justify-between text-[11px] text-gray-500 dark:text-gray-400 pt-1">
+                <div className="flex justify-between text-[11px] text-gray-600 dark:text-gray-400 pt-1">
                   <span>Goals & Learning Style (25%)</span>
                   <span className="font-semibold text-gray-800 dark:text-gray-200">
                     {Math.round((score.goalScore + score.preferencesScore) / 2)}%
@@ -254,7 +254,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
               </div>
 
               {/* Extra Details */}
-              <div className="pt-2 text-[11px] text-gray-500 dark:text-gray-400 flex flex-wrap gap-x-4 gap-y-1">
+              <div className="pt-2 text-[11px] text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-4 gap-y-1">
                 <div>🗣️ {user.preferredLanguages.join(", ")}</div>
                 <div>⏰ Available: {user.availableTimes.join(", ")}</div>
                 <div>📅 Commitment: ~{user.weeklyHours}h/week</div>
@@ -293,6 +293,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
           {/* Direct Message Button */}
           <button
             onClick={() => onOpenChat ? onOpenChat(user.id) : router.push(`/messages?user=${user.id}`)}
+            aria-label="Send message"
             className="p-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-xl transition-colors cursor-pointer"
             title="Send Message"
           >
@@ -320,6 +321,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
           <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 dark:border-gray-700 relative">
             <button
               onClick={() => setBookingModalOpen(false)}
+              aria-label="Close"
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 cursor-pointer"
             >
               ✕
@@ -352,10 +354,11 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                  <label htmlFor="match-session-topic" className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                     Skill Topic to Focus On
                   </label>
                   <select
+                    id="match-session-topic"
                     value={sessionTopic}
                     onChange={(e) => setSessionTopic(e.target.value)}
                     className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-hidden dark:text-white"
@@ -394,7 +397,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
                           />
                           {slot} Sessions
                         </span>
-                        <span className="text-[11px] text-gray-400">1-on-1 Interactive</span>
+                        <span className="text-[11px] text-gray-600">1-on-1 Interactive</span>
                       </label>
                     ))}
                   </div>

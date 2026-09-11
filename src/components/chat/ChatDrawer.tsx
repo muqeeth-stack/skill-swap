@@ -95,6 +95,7 @@ export function ChatDrawer({ targetUserId, isOpen, onClose }: ChatDrawerProps) {
 
         <button
           onClick={onClose}
+          aria-label="Close chat"
           className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
         >
           ✕
@@ -131,7 +132,7 @@ export function ChatDrawer({ targetUserId, isOpen, onClose }: ChatDrawerProps) {
                 >
                   {msg.text}
                 </div>
-                <span className="text-[10px] text-gray-400 mt-1 px-1">
+                <span className="text-[10px] text-gray-600 mt-1 px-1">
                   {formatTime(msg.createdAt)}
                 </span>
               </div>
@@ -144,7 +145,7 @@ export function ChatDrawer({ targetUserId, isOpen, onClose }: ChatDrawerProps) {
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" />
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]" />
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.4s]" />
-            <span className="text-[11px] ml-1">{targetUser.name} is typing...</span>
+            <span className="text-[11px] text-gray-600 ml-1">{targetUser.name} is typing...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -153,7 +154,7 @@ export function ChatDrawer({ targetUserId, isOpen, onClose }: ChatDrawerProps) {
       {/* Suggested Quick Prompts */}
       <div className="px-3 py-1.5 bg-gray-50 dark:bg-gray-900/60 border-t border-gray-100 dark:border-gray-700/60 flex items-center gap-1.5 overflow-x-auto text-[11px]">
         <button
-          onClick={() => sendQuickChip(`Hi ${targetUser.name}! Are you free for a 30m skill swap this weekend?`)}
+          onClick={() => sendQuickChip(`Hi ${targetUser.name}! Are you free for a 30m skill exchange session this weekend?`)}
           className="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-800 hover:bg-indigo-50 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 cursor-pointer"
         >
           🤝 Propose Barter
@@ -172,11 +173,13 @@ export function ChatDrawer({ targetUserId, isOpen, onClose }: ChatDrawerProps) {
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
+          aria-label={`Message ${targetUser.name}`}
           placeholder={`Message ${targetUser.name}...`}
           className="flex-1 px-3.5 py-2 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-hidden dark:text-white"
         />
         <button
           type="submit"
+          aria-label="Send message"
           className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
