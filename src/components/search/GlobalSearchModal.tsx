@@ -85,12 +85,12 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
     });
 
     learningPaths.forEach((p) => {
-      if (p.title.toLowerCase().includes(q) || p.skill.toLowerCase().includes(q) || (p.description || "").toLowerCase().includes(q)) {
+      if (p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q) || (p.description || "").toLowerCase().includes(q)) {
         out.push({
           id: `lp-${p.id}`,
           group: "Learning Paths",
           title: p.title,
-          subtitle: p.skill,
+          subtitle: p.category,
           href: "/paths",
         });
       }
