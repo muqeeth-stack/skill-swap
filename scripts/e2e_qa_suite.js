@@ -2,7 +2,7 @@
 const puppeteer = require('puppeteer-core');
 
 const CHROME_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const BASE_URL = 'https://skillswap-r7y0tmegy-amuqeeth57-5664.vercel.app';
+const BASE_URL = 'https://skillswap-affz5hopu-amuqeeth57-5664.vercel.app';
 
 let registeredEmail = '';
 const QA_PASSWORD = 'SynapseQA!2026';
@@ -523,10 +523,10 @@ async function runQA() {
       await page.type('[data-testid="fp-password"]', newPass);
       await page.type('[data-testid="fp-confirm"]', newPass);
       await jsClick('[data-testid="fp-reset"]');
-      await new Promise(r => setTimeout(r, 1200));
-      const doneBtn = await page.$('[data-testid="fp-done"]');
+      // PBKDF2 re-hash + re-render is slowest in production; poll for the done screen.
+      await waitEl('[data-testid="fp-done"]', 10000);
       const doneText = await page.evaluate(() => document.body.innerText);
-      if (!doneBtn || !doneText.toLowerCase().includes('password has been updated')) {
+      if (!doneText.toLowerCase().includes('password has been updated')) {
         throw new Error('Password reset completion page not shown');
       }
 
