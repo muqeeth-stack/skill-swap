@@ -2,7 +2,7 @@
 const puppeteer = require('puppeteer-core');
 
 const CHROME_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const BASE_URL = 'https://skillswap-c550csigo-amuqeeth57-5664.vercel.app';
+const BASE_URL = 'https://skillswap-dqydkifdp-amuqeeth57-5664.vercel.app';
 
 async function runQA() {
   console.log('====================================================');
