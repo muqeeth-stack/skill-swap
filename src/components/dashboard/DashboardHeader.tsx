@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { User } from "@/types";
+import { useApp } from "@/context/AppContext";
 
 interface DashboardHeaderProps {
   currentUser: User;
@@ -11,8 +12,15 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ currentUser, onOpenProfileImprove, onOpenAiAssistant }: DashboardHeaderProps) {
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const { isHydrated } = useApp();
+  // Time-of-day greeting must not appear during SSR/hydration first paint,
+  // otherwise server (UTC) and client (local TZ) text differs → React error #418.
+  const greeting = !isHydrated
+    ? "Hello"
+    : (() => {
+        const hour = new Date().getHours();
+        return hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+      })();
 
   // Calculate profile completeness
   let score = 50;

@@ -2,7 +2,7 @@
 const puppeteer = require('puppeteer-core');
 
 const CHROME_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'https://skillswap-r7y0tmegy-amuqeeth57-5664.vercel.app';
 
 let registeredEmail = '';
 const QA_PASSWORD = 'SynapseQA!2026';

@@ -82,6 +82,7 @@ interface AppState {
   reports: UserReport[];
   matchWeights: MatchWeights;
   isAuthenticated: boolean;
+  isHydrated: boolean;
   registrationStep: number;
   theme: "light" | "dark";
   authProvider: "demo" | "google" | "password";
@@ -207,6 +208,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     reports: [],
     matchWeights: DEFAULT_MATCH_WEIGHTS,
     isAuthenticated: true,
+    isHydrated: false,
     registrationStep: 1,
     theme: "light",
     authProvider: "demo",
@@ -1461,6 +1463,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       reports: [],
       matchWeights: DEFAULT_MATCH_WEIGHTS,
       isAuthenticated: true,
+      isHydrated: true,
       registrationStep: 1,
       theme: "light",
       authProvider: "demo",
