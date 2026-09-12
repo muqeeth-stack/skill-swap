@@ -88,12 +88,13 @@ interface AppState {
   authProvider: "demo" | "google" | "password";
   isGoogleConfigured: boolean;
   isAuthChecking: boolean;
+  authResolved: boolean;
   toasts: ToastInfo[];
 }
 
 interface AppContextType extends AppState {
   login: (email: string, password: string, remember?: boolean) => Promise<boolean>;
-  loginWithGoogle: () => boolean;
+  loginWithGoogle: (next?: string) => boolean;
   quickLogin: (userEmail: string) => void;
   logout: () => void;
   register: (step: number, data: Partial<User>) => void;
@@ -214,6 +215,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     authProvider: "demo",
     isGoogleConfigured: false,
     isAuthChecking: false,
+    authResolved: false,
     toasts: [],
   });
 
@@ -278,7 +280,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!isHydrated) return;
     try {
       if (typeof window !== "undefined") {
-        const toPersist = { ...state, toasts: undefined };
+        const toPersist = { ...state, toasts: undefined, authResolved: false };
         localStorage.setItem("synapselearn_state_v2", JSON.stringify(toPersist));
       }
     } catch (err) {
@@ -321,7 +323,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const status = (await statusRes.json()) as { googleConfigured: boolean };
         if (cancelled) return;
         if (!status.googleConfigured) {
-          setState((prev) => ({ ...prev, isGoogleConfigured: false, isAuthChecking: false }));
+          setState((prev) => ({ ...prev, isGoogleConfigured: false, isAuthChecking: false, authResolved: true }));
           return;
         }
         setState((prev) => ({ ...prev, isGoogleConfigured: true, isAuthChecking: true }));
@@ -380,15 +382,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               currentUser: googleUser,
               isAuthenticated: true,
               isAuthChecking: false,
+              authResolved: true,
               authProvider: "google",
             };
           });
         } else {
-          setState((prev) => ({ ...prev, isAuthChecking: false, authProvider: "demo" }));
+          setState((prev) => ({ ...prev, isAuthChecking: false, authResolved: true, authProvider: "demo" }));
         }
       } catch (err) {
         console.warn("Could not check Google session:", err);
-        if (!cancelled) setState((prev) => ({ ...prev, isAuthChecking: false }));
+        if (!cancelled) setState((prev) => ({ ...prev, isAuthChecking: false, authResolved: true }));
       }
     })();
     return () => {
@@ -495,18 +498,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.users, showToast]
   );
 
-  const loginWithGoogle = useCallback(() => {
-    if (!state.isGoogleConfigured) {
-      showToast(
-        "Google sign-in is not configured yet. Set AUTH_GOOGLE_CLIENT_ID & AUTH_GOOGLE_CLIENT_SECRET, or use a demo persona.",
-        "warning"
-      );
-      return false;
-    }
-    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- OAuth requires a full document navigation so the server redirect chain sets session cookies
-    window.location.assign("/api/auth/google");
-    return true;
-  }, [state.isGoogleConfigured, showToast]);
+  const loginWithGoogle = useCallback(
+    (next?: string) => {
+      if (!state.isGoogleConfigured) {
+        showToast(
+          "Google sign-in is not configured yet. Set AUTH_GOOGLE_CLIENT_ID & AUTH_GOOGLE_CLIENT_SECRET, or use a demo persona.",
+          "warning"
+        );
+        return false;
+      }
+      const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+      const target = `/api/auth/google?next=${encodeURIComponent(safeNext)}`;
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- OAuth requires a full document navigation so the server redirect chain sets session cookies
+      window.location.assign(target);
+      return true;
+    },
+    [state.isGoogleConfigured, showToast]
+  );
 
   const quickLogin = useCallback((userEmail: string) => {
     const found = state.users.find((u) => u.email === userEmail);
@@ -1469,6 +1477,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       authProvider: "demo",
       isGoogleConfigured: false,
       isAuthChecking: false,
+      authResolved: false,
       toasts: [],
     });
     showToast("Application state reset to default demo data", "info");

@@ -4,6 +4,10 @@ import { getGoogleConfig, getBaseUrl, createSessionCookie, verifyPkceToken, cook
 
 export const runtime = "nodejs";
 
+const GOOGLE_TOKEN_URL = process.env.GOOGLE_TOKEN_URL ?? "https://oauth2.googleapis.com/token";
+const GOOGLE_USERINFO_URL =
+  process.env.GOOGLE_USERINFO_URL ?? "https://openidconnect.googleapis.com/v1/userinfo";
+
 interface GoogleUserInfo {
   sub: string;
   email: string;
@@ -33,7 +37,7 @@ export async function GET(req: NextRequest) {
     return failRedirect("state_mismatch");
   }
 
-  const tokenUrl = "https://oauth2.googleapis.com/token";
+  const tokenUrl = GOOGLE_TOKEN_URL;
   let tokenRes: Response;
   try {
     tokenRes = await fetch(tokenUrl, {
@@ -60,7 +64,7 @@ export async function GET(req: NextRequest) {
 
   let userInfo: GoogleUserInfo;
   try {
-    const infoRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+    const infoRes = await fetch(GOOGLE_USERINFO_URL, {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
     if (!infoRes.ok) return failRedirect("userinfo_failed");

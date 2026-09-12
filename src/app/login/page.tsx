@@ -71,7 +71,7 @@ const { login, logout, allUsers, quickLogin, loginWithGoogle, isGoogleConfigured
 
   const handleGoogle = () => {
     logout();
-    loginWithGoogle();
+    loginWithGoogle(next);
   };
 
   const handleFastSwitch = (userEmail: string) => {

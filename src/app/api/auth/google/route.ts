@@ -4,6 +4,8 @@ import { getGoogleConfig, getBaseUrl, signPkceToken, cookieNames } from "@/lib/a
 
 export const runtime = "nodejs";
 
+const GOOGLE_AUTH_URL = process.env.GOOGLE_AUTH_URL ?? "https://accounts.google.com/o/oauth2/v2/auth";
+
 export async function GET(req: NextRequest) {
   const config = getGoogleConfig();
   if (!config.isConfigured) {
@@ -45,7 +47,7 @@ AUTH_SECRET=$(openssl rand -base64 32)</pre>
     access_type: "online",
   });
 
-  const res = NextResponse.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
+  const res = NextResponse.redirect(`${GOOGLE_AUTH_URL}?${params.toString()}`);
   res.cookies.set({
     name: cookieNames.PKCE_COOKIE,
     value: stateToken,

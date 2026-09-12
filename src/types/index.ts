@@ -17,6 +17,14 @@ export interface UserSkill {
   yearsOfExp?: number;
 }
 
+/** Chip/list label: prefer the specific sub-skill so two Cricket entries stay distinct. */
+export function skillChipLabel(skill: Pick<UserSkill, "name" | "subSkill">): string {
+  if (skill.subSkill && skill.subSkill.toLowerCase() !== skill.name.toLowerCase()) {
+    return skill.subSkill;
+  }
+  return skill.name;
+}
+
 export interface User {
   id: string;
   name: string;

@@ -21,13 +21,19 @@ const PROTECTED_PATHS = [
   "/skill-graph",
   "/recordings",
   "/booksync",
+  "/sessions",
+  "/calendar",
   "/admin",
 ];
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
-  const { theme, authProvider, isAuthChecking, currentUser } = useApp();
+  const { theme, authProvider, isAuthChecking, authResolved, currentUser } = useApp();
   const pathname = usePathname();
   const router = useRouter();
+
+  const isProtected = PROTECTED_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(p + "/")
+  );
 
   useEffect(() => {
     if (theme === "dark") {
@@ -37,19 +43,17 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [theme]);
 
-  // Protect private routes when authenticated via a real Google session
+  // Protect private routes: a signed-out user on a protected page goes to /login and returns via ?next=.
+  // authResolved gates this so the check runs before we bounce anyone (covers the OAuth return hop where
+  // the Google session cookie is restored via /api/auth/me before the page is deemed protected).
   useEffect(() => {
-    if (authProvider !== "google") return;
-    if (isAuthChecking) return;
-    const isProtected = PROTECTED_PATHS.some(
-      (p) => pathname === p || pathname.startsWith(p + "/")
-    );
+    if (isAuthChecking || !authResolved) return;
     if (isProtected && !currentUser) {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
     }
-  }, [authProvider, isAuthChecking, currentUser, pathname, router]);
+  }, [authProvider, isAuthChecking, authResolved, currentUser, isProtected, pathname, router]);
 
-  if (isAuthChecking) {
+  if (isAuthChecking || (isProtected && !authResolved)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 gap-3">
         <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white text-xl font-bold animate-pulse">
