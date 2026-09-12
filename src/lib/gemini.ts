@@ -1,21 +1,31 @@
-const MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 
 export function isGeminiConfigured(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
 }
 
 function extractJson(text: string): unknown {
-  const trimmed = text.trim();
+  let clean = text.trim();
+  // Strip markdown code fence markers if present
+  if (clean.startsWith("```")) {
+    clean = clean.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+  }
   try {
-    return JSON.parse(trimmed);
+    return JSON.parse(clean);
   } catch {
-    const start = trimmed.indexOf("{");
-    const end = trimmed.lastIndexOf("}");
+    const start = clean.indexOf("{");
+    const end = clean.lastIndexOf("}");
     if (start !== -1 && end > start) {
       try {
-        return JSON.parse(trimmed.slice(start, end + 1));
+        return JSON.parse(clean.slice(start, end + 1));
       } catch {
-        return null;
+        // Attempt fixing simple trailing commas if any
+        try {
+          const sanitized = clean.slice(start, end + 1).replace(/,\s*([}\]])/g, "$1");
+          return JSON.parse(sanitized);
+        } catch {
+          return null;
+        }
       }
     }
     return null;

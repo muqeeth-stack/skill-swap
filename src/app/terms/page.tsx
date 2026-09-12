@@ -59,10 +59,24 @@ export default function TermsPage() {
         </section>
       ))}
 
-      <div className="pt-4">
-        <Link href="/" className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
-          ← Back to SynapseLearn
+      <div className="pt-6 border-t border-gray-200 dark:border-gray-800 flex flex-wrap items-center justify-between gap-3">
+        <Link href="/dashboard" className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+          ← Back to Dashboard
         </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/exchange"
+            className="px-3.5 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-semibold transition-colors"
+          >
+            ⇄ Barter Rules
+          </Link>
+          <Link
+            href="/admin"
+            className="px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-300 rounded-xl text-xs font-semibold transition-colors"
+          >
+            🛡️ Safety &amp; Reporting
+          </Link>
+        </div>
       </div>
     </div>
   );

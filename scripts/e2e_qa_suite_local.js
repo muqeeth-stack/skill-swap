@@ -1,7 +1,9 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const puppeteer = require('puppeteer-core');
 
-const CHROME_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME_PATH = process.env.CHROME_PATH || (process.platform === 'win32'
+  ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+  : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 const BASE_URL = 'http://localhost:3000';
 
 let registeredEmail = '';

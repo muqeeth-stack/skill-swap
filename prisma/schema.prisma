@@ -1,0 +1,179 @@
+// SynapseLearn Prisma Schema
+// Supports PostgreSQL in production (Supabase / Neon / AWS RDS) and SQLite in local/preview environments.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String   @id @default(uuid())
+  name                String
+  email               String   @unique
+  avatar              String   @default("")
+  bio                 String   @default("")
+  location            String?
+  weeklyHours         Int      @default(4)
+  credits             Int      @default(100)
+  rating              Float    @default(5.0)
+  totalReviews        Int      @default(0)
+  totalSessionsTaught Int      @default(0)
+  totalSessionsLearned Int     @default(0)
+  completedExchanges  Int      @default(0)
+  streakDays          Int      @default(1)
+  role                String   @default("user")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  skills              UserSkill[]
+  teachingSessions    Session[]           @relation("TeacherSessions")
+  learningSessions    Session[]           @relation("LearnerSessions")
+  sentOffers          SkillExchangeOffer[] @relation("ProposerOffers")
+  receivedOffers      SkillExchangeOffer[] @relation("RecipientOffers")
+  sentMessages        Message[]           @relation("SentMessages")
+  receivedMessages    Message[]           @relation("ReceivedMessages")
+  reviewsGiven        Review[]            @relation("ReviewsGiven")
+  reviewsReceived     Review[]            @relation("ReviewsReceived")
+  hostedRooms         LearningRoom[]      @relation("HostedRooms")
+
+  @@index([email])
+}
+
+model PasswordAccount {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  salt         String
+  iterations   Int      @default(210000)
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([email])
+}
+
+model UserSkill {
+  id         String   @id @default(uuid())
+  userId     String
+  name       String
+  category   String
+  subSkill   String?
+  level      String   @default("Beginner") // Beginner, Intermediate, Advanced, Expert
+  yearsOfExp Int?
+  type       String   // "teach" | "learn"
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([category])
+  @@index([name])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  teacherId    String
+  learnerId    String
+  skill        String
+  subSkill     String?
+  scheduledAt  DateTime
+  duration     Int      @default(60) // minutes
+  status       String   @default("active") // pending, active, completed, cancelled
+  type         String   @default("1on1") // 1on1, group, prerecorded
+  credits      Int      @default(10)
+  meetingLink  String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  teacher      User     @relation("TeacherSessions", fields: [teacherId], references: [id], onDelete: Cascade)
+  learner      User     @relation("LearnerSessions", fields: [learnerId], references: [id], onDelete: Cascade)
+  reviews      Review[]
+
+  @@index([teacherId])
+  @@index([learnerId])
+  @@index([status])
+}
+
+model SkillExchangeOffer {
+  id          String   @id @default(uuid())
+  proposerId  String
+  recipientId String
+  teachSkill  String
+  learnSkill  String
+  message     String?
+  status      String   @default("pending") // pending, accepted, declined, completed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  proposer    User     @relation("ProposerOffers", fields: [proposerId], references: [id], onDelete: Cascade)
+  recipient   User     @relation("RecipientOffers", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([proposerId])
+  @@index([recipientId])
+  @@index([status])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  recipientId    String
+  text           String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  sender         User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient      User     @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([createdAt])
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  sessionId   String?
+  reviewerId  String
+  revieweeId  String
+  rating      Int      @default(5)
+  comment     String
+  skillTaught String
+  createdAt   DateTime @default(now())
+
+  session     Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  reviewer    User     @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee    User     @relation("ReviewsReceived", fields: [revieweeId], references: [id], onDelete: Cascade)
+
+  @@index([reviewerId])
+  @@index([revieweeId])
+}
+
+model LearningRoom {
+  id              String   @id @default(uuid())
+  title           String
+  description     String
+  category        String
+  skill           String
+  subSkill        String?
+  level           String   @default("Beginner")
+  hostId          String
+  scheduledAt     DateTime
+  duration        Int      @default(60)
+  status          String   @default("open") // open, full, in_progress, completed
+  credits         Int      @default(15)
+  maxParticipants Int      @default(8)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  host            User     @relation("HostedRooms", fields: [hostId], references: [id], onDelete: Cascade)
+
+  @@index([hostId])
+  @@index([category])
+  @@index([status])
+}

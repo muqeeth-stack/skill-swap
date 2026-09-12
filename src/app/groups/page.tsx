@@ -1,14 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { useApp } from "@/context/AppContext";
+import { LiveSessionRoomModal } from "@/components/video/LiveSessionRoomModal";
 
 export default function GroupsPage() {
-  const { currentUser, rooms, createRoom, joinRoom, sendRoomMessage } = useApp();
+  const { currentUser, rooms, createRoom, joinRoom, sendRoomMessage, smartPods, joinSmartPod } = useApp();
   const [selectedRoomId, setSelectedRoomId] = useState<string>("");
   const selectedRoom = (selectedRoomId ? rooms.find((r) => r.id === selectedRoomId) : null) || rooms[0] || null;
   const [roomChatText, setRoomChatText] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isLiveRoomOpen, setIsLiveRoomOpen] = useState(false);
 
   // New room state
   const [roomTitle, setRoomTitle] = useState("");
@@ -66,6 +69,127 @@ export default function GroupsPage() {
         </button>
       </div>
 
+      {/* AI Smart Study Pods (3+ Co-Learners Detected) */}
+      <section className="bg-gradient-to-br from-teal-950/40 via-gray-900 to-indigo-950/30 rounded-3xl border border-teal-500/30 p-5 sm:p-6 shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-teal-500/20 pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-teal-500/20 text-teal-300 text-sm">
+              🤖
+            </span>
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                AI Smart Study Pods
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-teal-400 text-gray-950">
+                  3+ Co-Learners Detected
+                </span>
+              </h2>
+              <p className="text-xs text-teal-200/70">
+                Intelligently clustered study groups automatically identified from mutual learner objectives across the platform.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {smartPods.length === 0 ? (
+          <div className="text-center py-6 text-gray-400 text-xs">
+            No 3+ co-learner cohorts detected yet. As members add learning goals to their profiles, intelligent study groups will automatically appear here.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {smartPods.map((pod) => {
+            const hasExistingRoom = Boolean(pod.existingRoomId && rooms.some((r) => r.id === pod.existingRoomId));
+            const isUserJoined = hasExistingRoom && rooms.find((r) => r.id === pod.existingRoomId)?.participants.includes(currentUser?.id || "");
+
+            return (
+              <div
+                key={pod.id}
+                className="bg-white/5 hover:bg-white/8 backdrop-blur-md rounded-2xl border border-teal-500/20 p-4 space-y-3.5 flex flex-col justify-between transition-all hover:border-teal-400/40 shadow-sm"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-teal-300">
+                      {pod.category} • {pod.level}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-200 border border-teal-500/30">
+                      👥 {pod.learners.length} Co-Learners
+                    </span>
+                  </div>
+
+                  <h3 className="font-extrabold text-white text-base leading-tight">
+                    {pod.topic}
+                  </h3>
+
+                  <p className="text-xs text-gray-300 leading-relaxed line-clamp-2">
+                    {pod.rationale}
+                  </p>
+
+                  {/* Co-learner Avatars */}
+                  <div className="pt-1 flex items-center gap-2">
+                    <div className="flex -space-x-2 overflow-hidden">
+                      {pod.learners.slice(0, 4).map((learner) => (
+                        <div
+                          key={learner.id}
+                          className="relative w-7 h-7 rounded-full border-2 border-gray-900 overflow-hidden"
+                          title={`${learner.name} is learning this`}
+                        >
+                          <Image
+                            src={learner.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"}
+                            alt={learner.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {pod.learners.length > 4 && (
+                      <span className="text-[10px] text-teal-300 font-bold">
+                        +{pod.learners.length - 4} more
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Shared Goals / Topics */}
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[10px] font-semibold text-teal-400/80 uppercase">Shared Objectives:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {pod.sharedGoals.slice(0, 2).map((goal, idx) => (
+                        <span
+                          key={idx}
+                          className="text-[10px] bg-black/40 text-gray-300 px-2 py-0.5 rounded-md border border-white/5 line-clamp-1"
+                        >
+                          • {goal}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    const room = joinSmartPod(pod);
+                    if (room) {
+                      setSelectedRoomId(room.id);
+                      if (typeof document !== "undefined") {
+                        const el = document.getElementById("active-room-view");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }
+                  }}
+                  className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5 ${
+                    isUserJoined
+                      ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                      : "bg-gradient-to-r from-teal-400 to-emerald-400 hover:from-teal-300 hover:to-emerald-300 text-gray-950"
+                  }`}
+                >
+                  {isUserJoined ? "✓ You Are In This Circle (Open)" : "⚡ Form & Join Circle"}
+                </button>
+              </div>
+            );
+          })}
+          </div>
+        )}
+      </section>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-3">
           {rooms.map((room) => {
@@ -93,7 +217,10 @@ export default function GroupsPage() {
         </div>
 
         {selectedRoom && (
-          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-3xl border border-gray-200/80 dark:border-gray-700 p-6 shadow-xs flex flex-col justify-between space-y-6">
+          <div
+            id="active-room-view"
+            className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-3xl border border-gray-200/80 dark:border-gray-700 p-6 shadow-xs flex flex-col justify-between space-y-6 scroll-mt-24"
+          >
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-700">
                 <div>
@@ -111,7 +238,17 @@ export default function GroupsPage() {
                     Join Room 👥
                   </button>
                 ) : (
-                  <span className="text-xs text-emerald-600 font-bold">✓ Member</span>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50">
+                      ✓ Member
+                    </span>
+                    <button
+                      onClick={() => setIsLiveRoomOpen(true)}
+                      className="px-3.5 py-1.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-gray-950 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5 shadow-sm transition-all"
+                    >
+                      <span>🎥 Launch Live Circle</span>
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -243,6 +380,13 @@ export default function GroupsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {isLiveRoomOpen && selectedRoom && (
+        <LiveSessionRoomModal
+          room={selectedRoom}
+          onClose={() => setIsLiveRoomOpen(false)}
+        />
       )}
     </div>
   );

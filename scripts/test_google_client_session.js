@@ -15,7 +15,9 @@ const puppeteer = require('puppeteer-core');
 const crypto = require('node:crypto');
 
 const BASE = 'http://localhost:3000';
-const CHROME_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME_PATH = process.env.CHROME_PATH || (process.platform === 'win32'
+  ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+  : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome');
 const DEV_SECRET = 'synapselearn-local-dev-secret-not-for-production';
 
 // Replicate signToken() from src/lib/auth.ts with the dev secret so the browser

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import { daysFromNowISO } from "@/lib/dateUtils";
+import { generatePeerResponse } from "@/lib/chat-intelligence";
 
 function MessagesContent() {
   const searchParams = useSearchParams();
@@ -29,6 +30,7 @@ function MessagesContent() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingTopic, setBookingTopic] = useState("");
   const [mobileShowChat, setMobileShowChat] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // One-time initial selection from URL params / default partner (adjusting state during render)
@@ -102,8 +104,22 @@ function MessagesContent() {
       convId = startConversationWithUser(activeUser.id);
     }
 
-    sendMessage(convId, inputText.trim());
+    const textToSend = inputText.trim();
+    sendMessage(convId, textToSend, currentUser.id);
     setInputText("");
+
+    setIsTyping(true);
+    const delay = 1100 + Math.min(textToSend.length * 20, 700);
+    setTimeout(() => {
+      if (!activeUser || !currentUser) return;
+      const reply = generatePeerResponse({
+        targetUser: activeUser,
+        currentUser,
+        messageText: textToSend,
+      });
+      sendMessage(convId, reply, activeUser.id);
+      setIsTyping(false);
+    }, delay);
   };
 
   const handleConfirmBooking = (e: React.FormEvent) => {
@@ -319,6 +335,16 @@ function MessagesContent() {
                   </div>
                 );
               })
+            )}
+            {isTyping && (
+              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-xs py-1 px-2 animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-bounce" />
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.2s]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.4s]" />
+                <span className="text-[11px] font-medium ml-1 text-gray-600 dark:text-gray-300">
+                  {activeUser.name} is typing...
+                </span>
+              </div>
             )}
             <div ref={messagesEndRef} />
           </div>

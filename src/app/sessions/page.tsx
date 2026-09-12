@@ -4,12 +4,15 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useApp } from "@/context/AppContext";
 import { formatDateTime } from "@/lib/dateUtils";
+import { downloadICSFile, getGoogleCalendarUrl } from "@/lib/ics";
+import { LiveSessionRoomModal } from "@/components/video/LiveSessionRoomModal";
 import { Session } from "@/types";
 
 export default function SessionsPage() {
-  const { currentUser, sessions, allUsers, completeSession, cancelSession, submitReview } = useApp();
-  const [filter, setFilter] = useState<"all" | "active" | "completed" | "cancelled">("all");
+  const { currentUser, sessions, allUsers, completeSession, cancelSession, confirmSession, submitReview } = useApp();
+  const [filter, setFilter] = useState<"all" | "active" | "pending" | "completed" | "cancelled">("all");
   const [reviewingSession, setReviewingSession] = useState<Session | null>(null);
+  const [activeLiveSession, setActiveLiveSession] = useState<Session | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
 
@@ -56,12 +59,12 @@ export default function SessionsPage() {
         </Link>
       </div>
 
-      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700">
-        {(["all", "active", "completed", "cancelled"] as const).map((t) => (
+      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 overflow-x-auto pb-1">
+        {(["all", "active", "pending", "completed", "cancelled"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setFilter(t)}
-            className={`pb-3 px-4 text-xs font-bold border-b-2 capitalize transition-colors cursor-pointer ${
+            className={`pb-3 px-4 text-xs font-bold border-b-2 capitalize transition-colors cursor-pointer whitespace-nowrap ${
               filter === t ? "border-indigo-600 text-indigo-600 dark:text-indigo-400" : "border-transparent text-gray-500"
             }`}
           >
@@ -76,6 +79,15 @@ export default function SessionsPage() {
           const otherUserId = isTeacher ? s.learnerId : s.teacherId;
           const otherUser = allUsers.find((u) => u.id === otherUserId);
 
+          const statusBadgeCls =
+            s.status === "active"
+              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/40"
+              : s.status === "pending"
+              ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/40"
+              : s.status === "completed"
+              ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-300/40"
+              : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border border-gray-300/40";
+
           return (
             <div
               key={s.id}
@@ -89,7 +101,7 @@ export default function SessionsPage() {
                   <h3 className="font-bold text-gray-900 dark:text-white text-base mt-0.5">{s.skill}</h3>
                   <p className="text-xs text-gray-500">With {otherUser?.name || "Partner"}</p>
                 </div>
-                <span className="px-2.5 py-1 text-[10px] font-bold rounded-md uppercase bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
+                <span className={`px-2.5 py-1 text-[10px] font-bold rounded-md uppercase ${statusBadgeCls}`}>
                   {s.status}
                 </span>
               </div>
@@ -98,33 +110,107 @@ export default function SessionsPage() {
                 ⏰ Scheduled: {formatDateTime(s.scheduledAt)}
               </div>
 
-              <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <div className="pt-3 border-t border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
                 {s.status === "active" ? (
                   <div className="flex items-center gap-2">
                     <button
+                      onClick={() => setActiveLiveSession(s)}
+                      className="px-3.5 py-1.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-gray-950 rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer"
+                    >
+                      🎥 Join Live Room
+                    </button>
+                    <button
                       onClick={() => completeSession(s.id)}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold cursor-pointer"
                     >
                       Mark Done ✓
                     </button>
                     <button
                       onClick={() => cancelSession(s.id)}
-                      className="text-xs text-rose-500 hover:underline"
+                      className="text-xs text-rose-500 hover:underline cursor-pointer"
                     >
                       Cancel
                     </button>
                   </div>
+                ) : s.status === "pending" ? (
+                  <div className="flex items-center gap-2">
+                    {isTeacher ? (
+                      <>
+                        <button
+                          onClick={() => confirmSession(s.id)}
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
+                        >
+                          Accept &amp; Confirm ✓
+                        </button>
+                        <button
+                          onClick={() => cancelSession(s.id)}
+                          className="text-xs text-rose-500 hover:underline cursor-pointer"
+                        >
+                          Decline
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-[11px] text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/50 px-2 py-1 rounded-md border border-amber-200 dark:border-amber-800/40">
+                          ⏳ Awaiting Teacher Confirmation
+                        </span>
+                        <button
+                          onClick={() => cancelSession(s.id)}
+                          className="text-xs text-rose-500 hover:underline cursor-pointer"
+                        >
+                          Cancel Request
+                        </button>
+                      </>
+                    )}
+                  </div>
                 ) : s.status === "completed" ? (
                   <button
                     onClick={() => setReviewingSession(s)}
-                    className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-white rounded-lg text-xs font-bold"
+                    className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-white rounded-lg text-xs font-bold cursor-pointer"
                   >
                     ★ Leave Review
                   </button>
                 ) : (
-                  <span className="text-xs text-gray-400">Cancelled</span>
+                  <span className="text-xs text-gray-400 font-medium">Session Cancelled</span>
                 )}
 
+                {s.status === "active" && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const start = new Date(s.scheduledAt);
+                        const end = new Date(start.getTime() + (s.duration || 60) * 60000);
+                        downloadICSFile({
+                          id: s.id,
+                          title: `SynapseLearn: ${s.skill} Session with ${otherUser?.name || "Partner"}`,
+                          description: `Skill Exchange session on SynapseLearn.\nRole: ${isTeacher ? "Teacher" : "Learner"}\nPartner: ${otherUser?.name || "Partner"} (${otherUser?.email || ""})`,
+                          startTime: start,
+                          endTime: end,
+                          url: typeof window !== "undefined" ? window.location.origin + `/sessions` : undefined,
+                        });
+                      }}
+                      title="Download .ics for Apple / Outlook / Google Calendar"
+                      className="px-2.5 py-1 text-[11px] font-semibold bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors cursor-pointer"
+                    >
+                      📅 .ics
+                    </button>
+                    <a
+                      href={getGoogleCalendarUrl({
+                        id: s.id,
+                        title: `SynapseLearn: ${s.skill} Session with ${otherUser?.name || "Partner"}`,
+                        description: `Skill Exchange session on SynapseLearn.\nRole: ${isTeacher ? "Teacher" : "Learner"}\nPartner: ${otherUser?.name || "Partner"}`,
+                        startTime: new Date(s.scheduledAt),
+                        endTime: new Date(new Date(s.scheduledAt).getTime() + (s.duration || 60) * 60000),
+                      })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Add to Google Calendar"
+                      className="px-2.5 py-1 text-[11px] font-semibold bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 rounded-lg transition-colors cursor-pointer"
+                    >
+                      Google Cal ↗
+                    </a>
+                  </div>
+                )}
                 <Link
                   href={`/messages?user=${otherUserId}`}
                   className="text-xs font-bold text-indigo-600 hover:underline"
@@ -136,6 +222,13 @@ export default function SessionsPage() {
           );
         })}
       </div>
+
+      {activeLiveSession && (
+        <LiveSessionRoomModal
+          session={activeLiveSession}
+          onClose={() => setActiveLiveSession(null)}
+        />
+      )}
 
       {reviewingSession && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">

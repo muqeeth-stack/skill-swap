@@ -54,10 +54,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { userId, query, teachSkill, learnSkill } = body;
-    const targetUser = DEMO_USERS.find((u) => u.id === userId) || DEMO_USERS[0];
+    const { userId, user: customUser, pool: customPool, weights, query, teachSkill, learnSkill } = body;
+    
+    // Allow caller to supply dynamic user object or pool of registered users
+    const candidatePool = Array.isArray(customPool) && customPool.length > 0 ? customPool : DEMO_USERS;
+    const targetUser = customUser || candidatePool.find((u: { id: string }) => u.id === userId) || candidatePool[0] || DEMO_USERS[0];
+    const matchWeights = weights || DEFAULT_MATCH_WEIGHTS;
 
-    const matches = findBestMatches(targetUser, DEMO_USERS, DEFAULT_MATCH_WEIGHTS);
+    const matches = findBestMatches(targetUser, candidatePool, matchWeights);
     
     let filteredMatches = matches;
     if (query) {

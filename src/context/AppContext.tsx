@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from "react";
+import { SmartStudyPod, detectSmartStudyPods } from "@/lib/group-intelligence";
 import {
   User,
   Session,
@@ -113,7 +114,8 @@ interface AppContextType extends AppState {
   blockUser: (userId: string) => void;
   reportUser: (userId: string, reason: string) => void;
   startConversationWithUser: (targetUserId: string) => string;
-  sendMessage: (conversationId: string, text: string) => void;
+  sendMessage: (conversationId: string, text: string, senderId?: string) => void;
+  clearConversationMessages: (conversationId: string) => void;
   markMessagesRead: (conversationId: string) => void;
   bookSession: (
     teacherId: string,
@@ -125,6 +127,7 @@ interface AppContextType extends AppState {
     notes?: string
   ) => Session | null;
   cancelSession: (sessionId: string) => void;
+  confirmSession: (sessionId: string) => void;
   completeSession: (sessionId: string) => void;
   createRoom: (
     title: string,
@@ -149,6 +152,7 @@ interface AppContextType extends AppState {
     description: string
   ) => SkillExchangeOffer | null;
   acceptExchangeOffer: (exchangeId: string) => void;
+  deleteExchangeOffer: (exchangeId: string) => void;
   togglePathStage: (pathId: string, stageNum: number) => void;
   submitReview: (
     sessionId: string,
@@ -181,6 +185,8 @@ interface AppContextType extends AppState {
   getUserTimeSlots: (userId: string) => TimeSlot[];
   getCreditHistory: (userId: string) => CreditTransaction[];
   resetToDefaultData: () => void;
+  smartPods: SmartStudyPod[];
+  joinSmartPod: (pod: SmartStudyPod) => LearningRoom | null;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -225,9 +231,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       if (typeof window !== "undefined") {
+        const storedTheme = localStorage.getItem("synapse_theme") as "light" | "dark" | null;
         const raw = localStorage.getItem("synapselearn_state_v2");
+        let initialTheme = storedTheme;
+
         if (raw) {
           const parsed = JSON.parse(raw);
+          if (!initialTheme && (parsed?.theme === "dark" || parsed?.theme === "light")) {
+            initialTheme = parsed.theme;
+          }
           if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) {
             // Hydrating from localStorage: legitimate external store sync
             // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -242,6 +254,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               return {
                 ...prev,
                 ...parsed,
+                theme: initialTheme || parsed.theme || prev.theme,
                 users: mergedUsers,
                 allUsers: mergedUsers,
                 currentUser: mergedCurrentUser,
@@ -250,12 +263,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 toasts: [],
               };
             });
-
-            if (parsed.theme === "dark") {
-              document.documentElement.classList.add("dark");
-            } else {
-              document.documentElement.classList.remove("dark");
-            }
 
             // Enforce password-account sessions (remember-me semantics)
             if (parsed.authProvider === "password") {
@@ -266,6 +273,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               }
             }
           }
+        }
+
+        const effectiveTheme = initialTheme || (document.documentElement.classList.contains("dark") ? "dark" : "light");
+        setState((prev) => ({ ...prev, theme: effectiveTheme }));
+        if (effectiveTheme === "dark") {
+          document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = "dark";
+        } else {
+          document.documentElement.classList.remove("dark");
+          document.documentElement.style.colorScheme = "light";
         }
       }
     } catch (err) {
@@ -424,10 +441,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => {
       const newTheme = prev.theme === "light" ? "dark" : "light";
       if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("synapse_theme", newTheme);
+        } catch {}
         if (newTheme === "dark") {
           document.documentElement.classList.add("dark");
+          document.documentElement.style.colorScheme = "dark";
         } else {
           document.documentElement.classList.remove("dark");
+          document.documentElement.style.colorScheme = "light";
         }
       }
       return { ...prev, theme: newTheme };
@@ -857,21 +879,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const sendMessage = useCallback(
-    (conversationId: string, text: string) => {
+    (conversationId: string, text: string, senderId?: string) => {
       if (!state.currentUser || !text.trim()) return;
+      const actualSenderId = senderId || state.currentUser.id;
       const newMsg: Message = {
-        id: `msg-${Date.now()}`,
+        id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         conversationId,
-        senderId: state.currentUser.id,
+        senderId: actualSenderId,
         text: text.trim(),
         createdAt: new Date().toISOString(),
-        read: false,
+        read: actualSenderId === state.currentUser.id,
       };
 
       setState((prev) => {
         const updatedConversations = prev.conversations.map((c) =>
           c.id === conversationId
-            ? { ...c, lastMessage: text.trim(), lastMessageTime: newMsg.createdAt }
+            ? {
+                ...c,
+                lastMessage: text.trim(),
+                lastMessageTime: newMsg.createdAt,
+                unreadCount: actualSenderId !== prev.currentUser?.id ? (c.unreadCount || 0) + 1 : c.unreadCount,
+              }
             : c
         );
         return {
@@ -883,6 +911,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
     [state.currentUser]
   );
+
+  const clearConversationMessages = useCallback((conversationId: string) => {
+    setState((prev) => {
+      const remainingMessages = prev.messages.filter((m) => m.conversationId !== conversationId);
+      const updatedConversations = prev.conversations.map((c) =>
+        c.id === conversationId ? { ...c, lastMessage: "Conversation cleared", unreadCount: 0 } : c
+      );
+      return {
+        ...prev,
+        messages: remainingMessages,
+        conversations: updatedConversations,
+      };
+    });
+  }, []);
 
   const markMessagesRead = useCallback((conversationId: string) => {
     setState((prev) => {
@@ -964,6 +1006,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         sessions: prev.sessions.map((s) => (s.id === sessionId ? { ...s, status: "cancelled" } : s)),
       }));
       showToast("Session cancelled", "info");
+    },
+    [showToast]
+  );
+
+  const confirmSession = useCallback(
+    (sessionId: string) => {
+      setState((prev) => ({
+        ...prev,
+        sessions: prev.sessions.map((s) => (s.id === sessionId ? { ...s, status: "active" as const } : s)),
+      }));
+      showToast("Session confirmed and scheduled!", "success");
     },
     [showToast]
   );
@@ -1178,6 +1231,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return { ...prev, exchanges: updated, exchangeOffers: updated };
       });
       showToast("Skill exchange accepted!", "success");
+    },
+    [showToast]
+  );
+
+  const deleteExchangeOffer = useCallback(
+    (exchangeId: string) => {
+      setState((prev) => {
+        const updated = prev.exchanges.filter((e) => e.id !== exchangeId);
+        return { ...prev, exchanges: updated, exchangeOffers: updated };
+      });
+      showToast("Barter offer withdrawn from marketplace.", "info");
     },
     [showToast]
   );
@@ -1483,10 +1547,72 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     showToast("Application state reset to default demo data", "info");
   }, [showToast]);
 
+  const smartPods = useMemo(
+    () => detectSmartStudyPods(state.users, state.rooms),
+    [state.users, state.rooms]
+  );
+
+  const joinSmartPod = useCallback(
+    (pod: SmartStudyPod): LearningRoom | null => {
+      if (!state.currentUser) return null;
+
+      // If an existing room already matches this pod, join it!
+      if (pod.existingRoomId) {
+        const existing = state.rooms.find((r) => r.id === pod.existingRoomId);
+        if (existing) {
+          if (!existing.participants.includes(state.currentUser.id)) {
+            joinRoom(existing.id);
+          }
+          return existing;
+        }
+      }
+
+      const coLearnerIds = Array.from(new Set([state.currentUser.id, ...pod.learnerIds]));
+
+      const newRoom: LearningRoom = {
+        id: `room-pod-${Date.now()}`,
+        title: `${pod.topic} Study Circle`,
+        description: `AI-formed collaborative peer mastermind connecting ${pod.learners.length} learners. Topic: ${pod.topic}.`,
+        category: pod.category,
+        skill: pod.topic,
+        subSkill: undefined,
+        level: pod.level,
+        hostId: state.currentUser.id,
+        participants: coLearnerIds.slice(0, 10),
+        maxParticipants: Math.max(10, coLearnerIds.length + 2),
+        scheduledAt: new Date(Date.now() + 86400000 * 2).toISOString(),
+        duration: 60,
+        status: "open",
+        credits: 1,
+        goals: pod.sharedGoals,
+        chatMessages: [
+          {
+            id: `msg-sys-${Date.now()}`,
+            senderId: "system",
+            senderName: "SynapseLearn AI",
+            text: `Welcome to the ${pod.topic} Study Circle! AI detected ${pod.learners.length} co-learners interested in this domain. Let's practice and learn together!`,
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      };
+
+      setState((prev) => ({
+        ...prev,
+        rooms: [newRoom, ...prev.rooms],
+      }));
+
+      showToast(`Formed & joined the ${pod.topic} Study Circle!`, "success");
+      return newRoom;
+    },
+    [state.currentUser, state.rooms, joinRoom, showToast]
+  );
+
   return (
     <AppContext.Provider
       value={{
         ...state,
+        smartPods,
+        joinSmartPod,
         login,
         loginWithGoogle,
         quickLogin,
@@ -1508,9 +1634,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         reportUser,
         startConversationWithUser,
         sendMessage,
+        clearConversationMessages,
         markMessagesRead,
         bookSession,
         cancelSession,
+        confirmSession,
         completeSession,
         createRoom,
         joinRoom,
@@ -1518,6 +1646,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         sendRoomMessage,
         createExchangeOffer,
         acceptExchangeOffer,
+        deleteExchangeOffer,
         togglePathStage,
         submitReview,
         updateVideoProgress,

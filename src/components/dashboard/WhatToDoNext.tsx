@@ -32,10 +32,31 @@ function formatSessionTime(iso: string): string {
 }
 
 export function WhatToDoNext({ onOpenAiAssistant }: WhatToDoNextProps) {
-  const { currentUser, sessions, videoProgress, recordings, connections, learningPaths, getMatches } = useApp();
+  const { currentUser, sessions, videoProgress, recordings, connections, learningPaths, getMatches, smartPods } = useApp();
   if (!currentUser) return null;
 
   const actions: ActionItem[] = [];
+
+  // Check if 3+ co-learners are detected for one of currentUser's learning skills
+  const matchingPod = smartPods.find((pod) =>
+    pod.learnerIds.includes(currentUser.id) ||
+    currentUser.skillsLearn.some((s) =>
+      pod.topic.toLowerCase().includes(s.name.toLowerCase()) ||
+      s.name.toLowerCase().includes(pod.topic.toLowerCase())
+    )
+  );
+
+  if (matchingPod) {
+    actions.push({
+      id: "smart-pod",
+      priority: 85,
+      label: "AI Smart Study Pod detected",
+      detail: `${matchingPod.learners.length} peers are currently learning ${matchingPod.topic}. Join their circle!`,
+      href: "/groups",
+      icon: "🤖",
+      accent: "border-teal-300 bg-teal-50 dark:bg-teal-950/40 dark:border-teal-800/60",
+    });
+  }
 
   const upcoming = sessions
     .filter((s) => (s.teacherId === currentUser.id || s.learnerId === currentUser.id) && s.status === "pending")
