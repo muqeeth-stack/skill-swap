@@ -18,6 +18,7 @@ export function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [switchUserDropdownOpen, setSwitchUserDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
     { href: "/dashboard", label: "Dashboard" },
@@ -57,6 +58,23 @@ export function Navbar() {
               </div>
             </Link>
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            className="lg:hidden p-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+          >
+            {mobileMenuOpen ? (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
 
           <nav className="hidden lg:flex items-center gap-1.5 text-sm font-medium">
             {navLinks.map((link) => {
@@ -256,6 +274,36 @@ export function Navbar() {
           </div>
         </div>
       </header>
+
+      {/* Mobile Navigation Menu */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 top-16 z-30 bg-black/40 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}>
+          <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-xl p-4 space-y-1" onClick={e => e.stopPropagation()}>
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    active
+                      ? "bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 font-semibold"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  {link.label}
+                  {link.highlight && (
+                    <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold uppercase bg-indigo-100 dark:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 rounded-full">
+                      AI
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      )}
 
       <AiAssistantModal isOpen={aiModalOpen} onClose={() => setAiModalOpen(false)} />
       <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />

@@ -491,22 +491,6 @@ const [notifOwnerId, setNotifOwnerId] = useState<string | undefined>(currentUser
             </div>
           </div>
 
-          {/* Theme & Display Mode */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700 shadow-sm space-y-4">
-            <h3 className="text-base font-extrabold text-gray-900 dark:text-white">Interface & Appearance</h3>
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-750 border border-gray-200/70 dark:border-gray-700">
-              <div>
-                <div className="font-bold text-xs text-gray-900 dark:text-white">Theme Mode: {theme === "dark" ? "Dark Mode" : "Light Mode"}</div>
-                <p className="text-[11px] text-gray-600 dark:text-gray-400">Toggle between high-contrast light and dark appearance.</p>
-              </div>
-              <button
-                onClick={toggleTheme}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-all cursor-pointer shadow-xs"
-              >
-                Switch to {theme === "dark" ? "Light Mode ☀️" : "Dark Mode 🌙"}
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -548,6 +532,24 @@ const [notifOwnerId, setNotifOwnerId] = useState<string | undefined>(currentUser
           </div>
         </div>
       )}
+
+      {/* Interface & Appearance — always visible */}
+      <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700 shadow-sm space-y-4">
+        <h3 className="text-base font-extrabold text-gray-900 dark:text-white">🎨 Interface & Appearance</h3>
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-gray-750 border border-gray-200/70 dark:border-gray-700">
+          <div>
+            <div className="font-bold text-xs text-gray-900 dark:text-white">Theme Mode: {theme === "dark" ? "Dark Mode" : "Light Mode"}</div>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400">Toggle between high-contrast light and dark appearance.</p>
+          </div>
+          <button
+            onClick={toggleTheme}
+            data-testid="settings-theme-toggle"
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-all cursor-pointer shadow-xs"
+          >
+            Switch to {theme === "dark" ? "Light Mode ☀️" : "Dark Mode 🌙"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -519,7 +519,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const quickLogin = useCallback((userEmail: string) => {
     const found = state.users.find((u) => u.email === userEmail);
     if (found) {
-      setState((prev) => ({ ...prev, currentUser: found, isAuthenticated: true }));
+      setState((prev) => ({ ...prev, currentUser: found, isAuthenticated: true, authProvider: 'demo' }));
       showToast(`Switched persona to ${found.name} (${found.skillsTeach[0]?.name || "Learner"})`, "info");
     }
   }, [state.users, showToast]);
