@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { SmartStudyPod, detectSmartStudyPods } from "@/lib/group-intelligence";
 import {
   User,
@@ -96,6 +96,7 @@ interface AppState {
 interface AppContextType extends AppState {
   login: (email: string, password: string, remember?: boolean) => Promise<boolean>;
   loginWithGoogle: (next?: string) => boolean;
+  resyncGoogleSession: () => void;
   quickLogin: (userEmail: string) => void;
   logout: () => void;
   register: (step: number, data: Partial<User>) => void;
@@ -189,6 +190,70 @@ interface AppContextType extends AppState {
   joinSmartPod: (pod: SmartStudyPod) => LearningRoom | null;
 }
 
+// Transient auth-resolution flags must never be copied between tabs or restored from a
+// stored snapshot: they are recomputed on mount by the Google session check. A peer tab's
+// persist (or a stale snapshot) that copies `authResolved: false` into live state can
+// permanently re-arm the "Restoring your session…" spinner on a fresh post-OAuth tab.
+const TRANSIENT_AUTH_KEYS = ["isAuthChecking", "authResolved", "isGoogleConfigured"] as const;
+
+/** Copy of `obj` with the given keys removed. */
+function withoutKeys(obj: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...obj };
+  for (const key of keys) delete out[key];
+  return out;
+}
+
+/** Data slices a peer tab may contribute to this tab via the cross-tab sync. */
+const PEER_DATA_KEYS = [
+  "users",
+  "allUsers",
+  "skills",
+  "skillCatalog",
+  "sessions",
+  "rooms",
+  "exchanges",
+  "exchangeOffers",
+  "learningPaths",
+  "connections",
+  "conversations",
+  "messages",
+  "reviews",
+  "recordings",
+  "videoProgress",
+  "timeSlots",
+  "creditTransactions",
+  "notifications",
+  "reports",
+  "matchWeights",
+  "theme",
+  "registrationStep",
+] as const;
+
+function pickPeerData(parsed: Record<string, unknown>): Partial<AppState> {
+  const out: Record<string, unknown> = {};
+  for (const key of PEER_DATA_KEYS) {
+    // users/allUsers are merged by id in the storage handler so a peer never drops
+    // this tab's own identity out of the shared directory.
+    if (key === "users" || key === "allUsers") continue;
+    if (key in parsed) out[key] = parsed[key];
+  }
+  return out as Partial<AppState>;
+}
+
+/** True when `b` differs from `a` in any way the cross-tab sync is allowed to change. */
+function stateEqualsByData(a: AppState, b: AppState): boolean {
+  if (a.currentUser?.id !== b.currentUser?.id) return false;
+  for (const key of PEER_DATA_KEYS) {
+    if (a[key] === b[key]) continue;
+    try {
+      if (JSON.stringify(a[key]) !== JSON.stringify(b[key])) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -227,6 +292,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const [isHydrated, setIsHydrated] = useState(false);
 
+  // Last exact serialization we wrote to localStorage. Lets the persist effect skip writes
+  // that would only echo what another tab already persisted, breaking the storage ping-pong.
+  const lastPersistRef = useRef<string>("");
+
+  // Bumped by resyncGoogleSession() to re-run the one-shot Google session check when a peer
+  // tab's storage event proves our auth state went stale (e.g. right after an OAuth redirect).
+  const [sessionCheckNonce, setSessionCheckNonce] = useState(0);
+
+  const resyncGoogleSession = useCallback(() => {
+    setSessionCheckNonce((n) => n + 1);
+  }, []);
+
   // Hydrate persistent state from localStorage on client mount
   useEffect(() => {
     try {
@@ -253,7 +330,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
               return {
                 ...prev,
-                ...parsed,
+                ...withoutKeys(parsed, TRANSIENT_AUTH_KEYS),
                 theme: initialTheme || parsed.theme || prev.theme,
                 users: mergedUsers,
                 allUsers: mergedUsers,
@@ -297,31 +374,68 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!isHydrated) return;
     try {
       if (typeof window !== "undefined") {
-        const toPersist = { ...state, toasts: undefined, authResolved: false };
-        localStorage.setItem("synapselearn_state_v2", JSON.stringify(toPersist));
+        const toPersist = { ...state, toasts: undefined, authResolved: false, isAuthChecking: false };
+        const serialized = JSON.stringify(toPersist);
+        // Do not rewrite a snapshot we (or a peer) already wrote: identical re-writes would
+        // fire more storage events, echoing the clobbering flags back and forth across tabs.
+        if (serialized === lastPersistRef.current) return;
+        lastPersistRef.current = serialized;
+        localStorage.setItem("synapselearn_state_v2", serialized);
       }
     } catch (err) {
       console.warn("Could not persist SynapseLearn state to localStorage:", err);
     }
   }, [state, isHydrated]);
 
-  // Cross-tab realtime sync: reflect external writes (e.g. chat from another tab)
+  // Cross-tab realtime sync: reflect external writes (e.g. chat from another tab).
+  // Only peer-editable data slices are absorbed; auth flags and this tab's identity stay local.
   useEffect(() => {
     if (!isHydrated || typeof window === "undefined") return;
     const onStorage = (e: StorageEvent) => {
       if (e.key !== "synapselearn_state_v2" || !e.newValue) return;
+      // Our own persist just wrote this exact snapshot — nothing new for this tab.
+      if (e.newValue === lastPersistRef.current) return;
       try {
         const parsed = JSON.parse(e.newValue);
         if (parsed && Array.isArray(parsed.users)) {
-          setState((prev) => ({
-            ...prev,
-            ...parsed,
-            currentUser:
-              parsed.currentUser && prev.currentUser
-                ? parsed.users.find((u: User) => u.id === prev.currentUser!.id) || parsed.currentUser
-                : prev.currentUser,
-            toasts: prev.toasts,
-          }));
+          const peerData = pickPeerData(parsed);
+          const peerUsers = parsed.users as User[];
+          const peerCurrentUser = parsed.currentUser as User | null;
+          setState((prev) => {
+            let next: AppState = { ...prev, toasts: prev.toasts };
+
+            // Merge the shared user directory by id (union): adopt peer profiles and any
+            // newer snapshot of this tab's own user, but never let a peer tab's write remove
+            // this tab's current user or replace this tab's identity.
+            const byId = new Map<string, User>();
+            for (const u of prev.users) byId.set(u.id, u);
+            for (const u of peerUsers) byId.set(u.id, u);
+            const mergedUsers = Array.from(byId.values());
+            next = {
+              ...next,
+              users: mergedUsers,
+              allUsers: mergedUsers,
+              currentUser: mergedUsers.find((u) => u.id === prev.currentUser?.id) || prev.currentUser,
+            };
+
+            // Absorb the peer's editable data slices (sessions, messages, rooms, theme, …).
+            next = { ...next, ...peerData, users: next.users, allUsers: next.allUsers, currentUser: next.currentUser };
+
+            // A peer tab logged in / out elsewhere: this tab's Google session may be stale.
+            const peerAuthChanged =
+              parsed.authProvider !== undefined &&
+              (parsed.authProvider !== prev.authProvider ||
+                Boolean(parsed.isAuthenticated) !== prev.isAuthenticated ||
+                (peerCurrentUser ? peerCurrentUser.id : null) !== (prev.currentUser ? prev.currentUser.id : null));
+            if (peerAuthChanged) {
+              // Re-run the Google session check so an OAuth'd tab resolves instead of spinning.
+              // Runs on a microtask so it starts after the setState above has flushed.
+              setTimeout(() => resyncGoogleSession(), 0);
+            }
+
+            if (stateEqualsByData(prev, next)) return prev; // nothing meaningful changed
+            return next;
+          });
         }
       } catch {
         /* ignore malformed cross-tab writes */
@@ -329,7 +443,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, [isHydrated]);
+  }, [isHydrated, resyncGoogleSession]);
 
   // Check for a real Google OAuth session on mount (external auth store sync)
   useEffect(() => {
@@ -414,7 +528,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [sessionCheckNonce]);
 
   const showToast = useCallback((message: string, type: "success" | "info" | "warning" | "error" = "info") => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
@@ -1615,6 +1729,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         joinSmartPod,
         login,
         loginWithGoogle,
+        resyncGoogleSession,
         quickLogin,
         logout,
         register,
