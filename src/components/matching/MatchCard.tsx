@@ -265,7 +265,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
       </div>
 
       {/* Action Footer */}
-      <div className="p-4 sm:px-6 bg-gray-50/80 dark:bg-gray-800/40 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between gap-2">
+      <div className="p-4 sm:px-6 bg-gray-50/80 dark:bg-gray-800/40 border-t border-gray-100 dark:border-gray-700/60 flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-2">
           {/* Quick Connect Button */}
           {connection ? (
@@ -306,7 +306,7 @@ export function MatchCard({ user, score, onOpenChat }: MatchCardProps) {
         {/* Book Session / Trade Button */}
         <button
           onClick={() => setBookingModalOpen(true)}
-          className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-indigo-500/25 transition-all flex items-center gap-1.5 cursor-pointer"
+          className="flex-1 min-w-0 justify-center px-2.5 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-indigo-500/25 transition-all flex items-center gap-1.5 cursor-pointer"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

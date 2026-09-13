@@ -20,9 +20,11 @@ export function Navbar() {
   const [switchUserDropdownOpen, setSwitchUserDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navLinks = [
+  type NavLink = { href: string; label: string };
+
+  const navLinks: NavLink[] = [
     { href: "/dashboard", label: "Dashboard" },
-    { href: "/matches", label: "AI Matches", highlight: true },
+    { href: "/matches", label: "AI Matches" },
     { href: "/skills", label: "Skills & Sports" },
     { href: "/exchange", label: "Skill Barter" },
     { href: "/videos", label: "Masterclasses" },
@@ -78,21 +80,21 @@ export function Navbar() {
           </button>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 text-xs xl:text-sm font-medium shrink min-w-0">
+          <nav className="hidden lg:flex items-center gap-0 xl:gap-0.5 text-[11px] xl:text-xs 2xl:text-sm font-medium shrink-0 min-w-0">
             {navLinks.map((link) => {
               const active = isActive(link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`px-2 xl:px-2.5 py-1.5 rounded-xl whitespace-nowrap shrink-0 transition-all ${
+                  className={`px-1.5 xl:px-2 py-1.5 rounded-xl whitespace-nowrap shrink-0 transition-all ${
                     active
                       ? "bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 font-semibold shadow-2xs"
                       : "text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-800/60"
-                  } ${link.highlight && !active ? "text-indigo-600 dark:text-indigo-400" : ""}`}
+                  } ${false && !active ? "text-indigo-600 dark:text-indigo-400" : ""}`}
                 >
                   {link.label}
-                  {link.highlight && (
+                  {false && (
                     <span className="ml-1 px-1 py-0.2 text-[9px] xl:text-[10px] font-bold uppercase bg-indigo-100 dark:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 rounded-full">
                       AI
                     </span>
@@ -110,7 +112,7 @@ export function Navbar() {
               data-testid="global-search-btn"
               title="Search SynapseLearn"
               aria-label="Search SynapseLearn"
-              className="px-2 xl:px-2.5 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700/70 text-gray-600 dark:text-gray-300 border border-gray-200/80 dark:border-gray-700/80 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
+              className="px-1.5 xl:px-2 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700/70 text-gray-600 dark:text-gray-300 border border-gray-200/80 dark:border-gray-700/80 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
             >
               <span>🔍</span>
               <span className="hidden xl:inline">{pathname === "/matches" ? "Search matches" : "Search"}</span>
@@ -122,7 +124,7 @@ export function Navbar() {
               data-testid="ai-assistant-btn"
               title="AI Assistant"
               aria-label="AI Assistant"
-              className="px-2 xl:px-2.5 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/50 dark:to-purple-950/50 hover:from-indigo-100 hover:to-purple-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
+              className="px-1.5 xl:px-2 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/50 dark:to-purple-950/50 hover:from-indigo-100 hover:to-purple-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer shrink-0"
             >
               <span className="text-amber-500 animate-pulse">✨</span>
               <span className="hidden sm:inline">AI Assistant</span>
@@ -158,7 +160,7 @@ export function Navbar() {
                     onClick={() => setSwitchUserDropdownOpen(!switchUserDropdownOpen)}
                     className="hidden xl:flex items-center gap-1 px-2 py-1 text-[11px] font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg cursor-pointer shrink-0"
                   >
-                    <span>Switch Role</span>
+                    <span className="hidden 2xl:inline">Switch Role</span>
                     <span className="text-[9px]">▼</span>
                   </button>
 
@@ -298,7 +300,7 @@ export function Navbar() {
                 <span>{theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}</span>
               </button>
             </div>
-            {navLinks.map((link) => {
+            {navLinks.map((link: NavLink) => {
               const active = isActive(link.href);
               return (
                 <Link
@@ -312,7 +314,7 @@ export function Navbar() {
                   }`}
                 >
                   {link.label}
-                  {link.highlight && (
+                  {false && (
                     <span className="ml-2 px-1.5 py-0.5 text-[10px] font-bold uppercase bg-indigo-100 dark:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 rounded-full">
                       AI
                     </span>
